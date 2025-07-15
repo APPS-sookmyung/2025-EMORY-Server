@@ -1,7 +1,9 @@
 package emory.emoryserver.ai.dto.emotion;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
+@Data
 public class EmotionFeedbackRequestDto {
     @Schema(description = "분석된 감정", example = "불안")
     private String emotion;

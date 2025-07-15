@@ -1,7 +1,9 @@
 package emory.emoryserver.ai.dto.chat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
+@Data
 public class ChatSaveRequestDto {
     @Schema(description = "세션 ID", example = "abc123-session")
     private String sessionId;

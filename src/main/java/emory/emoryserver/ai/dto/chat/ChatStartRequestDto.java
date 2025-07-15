@@ -2,8 +2,9 @@ package emory.emoryserver.ai.dto.chat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jdk.jfr.DataAmount;
+import lombok.Data;
 
-
+@Data
 public class ChatStartRequestDto {
 
     @Schema(description = "사용자 ID", example = "1")

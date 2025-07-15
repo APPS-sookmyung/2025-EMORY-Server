@@ -1,7 +1,9 @@
 package emory.emoryserver.ai.dto.image;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
+@Data
 public class ImageRequestDto {
     @Schema(description = "감정", example = "기쁨")
     private String emotion;

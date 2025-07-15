@@ -1,9 +1,11 @@
 package emory.emoryserver.aidiary.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 import java.time.LocalDate;
 
+@Data
 public class DiarySaveRequestDto {
     @Schema(description = "AI가 생성한 일기 내용")
     private String diaryText;
