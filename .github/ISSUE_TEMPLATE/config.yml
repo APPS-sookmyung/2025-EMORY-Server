@@ -1,2 +1,17 @@
 blank_issues_enabled: true
-contact_links: []
+
+issue_templates:
+  - name: "✨ Feature Request"
+    about: "기능 템플릿"
+    title: "[Feat] "
+    file: feature_request.md
+
+  - name: "🐞 Bug Report"
+    about: "버그 템플릿"
+    title: ""
+    file: bug_report.md
+
+  - name: "📌 ETC / Minor Update"
+    about: "기타 작업"
+    title: ""
+    file: etc.md
