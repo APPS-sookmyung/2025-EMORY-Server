@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 public class ChatMessageResponseDto {
-    @Schema(description = "AI의 응답 메시지", example = "시험 보느라 고생 많았네요.")
-    private String aiMessage;
+    private String sessionId;
+    private String sender; //AI or USER
+    private String message;
+    private String timestamp;
 }
