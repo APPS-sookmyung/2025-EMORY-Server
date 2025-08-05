@@ -3,6 +3,7 @@ package emory.emoryserver.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import emory.emoryserver.ai.dto.chat.ChatMessageRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatMessageResponseDto;
+import emory.emoryserver.aidiary.model.AiDiary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -14,6 +15,7 @@ import emory.emoryserver.aidiary.service.AiDiaryService;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,16 +75,30 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String userId = sessionUserMap.get(session.getId());
         String sessionId = session.getId();
 
-        // 일기 생성 서비스 호출 (MongoDB 저장)
-        if (logs != null && userId != null) {
-            aiDiaryService.generateDiaryFromChat(logs, sessionId, userId);
+        try {
+            // 일기 생성 서비스 호출 (MongoDB 저장)
+            if (logs != null && userId != null) {
+                AiDiary saveDiary = aiDiaryService.generateDiaryFromChat(logs, sessionId, userId);
+
+                // 저장된 일기 id를 프론트로 전달 (일기 페이지 조회용)
+                if (saveDiary != null && session.isOpen()) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("type", "DIARY_CREATED");
+                    response.put("diaryId", saveDiary.getId());
+                    session.sendMessage(new TextMessage(new ObjectMapper().writeValueAsString(response)));
+                }
+
+            }
+        } catch (Exception e) {
+            System.err.println("일기 저장 중 오류 발생: " + e.getMessage());
+        } finally {
+            // 세션 데이터 정리
+            chatLogs.remove(session.getId());
+            sessionUserMap.remove(session.getId());
+            System.out.println("연결 종료 및 일기 저장 완료: " + session.getId());
         }
 
-        // 세션 데이터 정리
-        chatLogs.remove(session.getId());
-        sessionUserMap.remove(session.getId());
 
-        System.out.println("연결 종료 및 일기 저장 완료: " + session.getId());
     }
 
     // 에러 발생 시 응답

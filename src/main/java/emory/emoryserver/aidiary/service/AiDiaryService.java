@@ -1,21 +1,18 @@
 package emory.emoryserver.aidiary.service;
 
-import emory.emoryserver.aidiary.dto.DiaryUpdateRequestDto;
 import emory.emoryserver.aidiary.model.AiDiary;
 import emory.emoryserver.aidiary.repository.AiDiaryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class AiDiaryService {
 
     private final AiDiaryRepository aiDiaryRepository;
-
-    public AiDiaryService(AiDiaryRepository aiDiaryRepository) {
-        this.aiDiaryRepository = aiDiaryRepository;
-    }
 
     /*
     WebSocket 대화 로그 기반으로 일기 생성 및 저장
@@ -34,6 +31,14 @@ public class AiDiaryService {
         diary.setContent(content);
         diary.setCreatedAt(LocalDateTime.now());
         //3. mongoDB에 저장
+        return aiDiaryRepository.save(diary);
+
+    }
+    // 일기 수정
+    public AiDiary updateDiaryContent(String diaryId, String content) {
+        AiDiary diary = aiDiaryRepository.findById(diaryId)
+                .orElseThrow(() -> new RuntimeException("Diary not found with id " + diaryId));
+        diary.setContent(content);
         return aiDiaryRepository.save(diary);
 
     }
