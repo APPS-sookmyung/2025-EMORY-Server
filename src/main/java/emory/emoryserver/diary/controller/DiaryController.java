@@ -10,6 +10,7 @@ import emory.emoryserver.diary.service.DiaryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,17 +44,17 @@ public class DiaryController {
     @Operation(summary = "일기 작성", description = "AI 생성 후 사용자가 수정한 일기를 저장")
     public ResponseEntity<ApiResponse<DiaryResponse>> createDiary(
             @Parameter(description = "사용자 ID") @RequestHeader("userId") String userId,
-            @RequestBody DiaryCreateRequest request) {
+            @Valid @RequestBody DiaryCreateRequest request) {
         DiaryResponse response = diaryService.createDiary(userId, request);
         return ResponseEntity.ok(ApiResponse.success("일기가 작성되었습니다.", response));
     }
 
     @PutMapping("/{diaryId}")
-    @Operation(summary = "일기 수정", description = "카드 더블클릭 후 일기 수정 (날짜, AI 이미지는 수정 불가)")
+    @Operation(summary = "일기 수정", description = "카드 더블클릭 후 일기 수정")
     public ResponseEntity<ApiResponse<DiaryResponse>> updateDiary(
             @Parameter(description = "사용자 ID") @RequestHeader("userId") String userId,
             @Parameter(description = "일기 ID") @PathVariable String diaryId,
-            @RequestBody DiaryUpdateRequest request) {
+            @Valid @RequestBody DiaryUpdateRequest request) {
         DiaryResponse response = diaryService.updateDiary(userId, diaryId, request);
         return ResponseEntity.ok(ApiResponse.success("일기가 수정되었습니다.", response));
     }

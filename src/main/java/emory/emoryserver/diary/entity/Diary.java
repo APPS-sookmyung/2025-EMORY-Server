@@ -9,7 +9,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Document(collection = "diaries")
 @Getter
@@ -23,7 +22,6 @@ public class Diary extends BaseEntity {
     private String title;
     private String content;
     private EmotionCategory emotionCategory = EmotionCategory.SOSO;
-    private String aiGeneratedImage; // 대표 사진
-    private List<String> userUploadedImages; // 사용자 첨부 사진 (0~3개)
+    private String aiImageUrl; // AI 이미지 URL
     private boolean isScraped = false;
 }

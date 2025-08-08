@@ -16,6 +16,6 @@ public class DiaryImageResponse {
     @Schema(description = "일기 날짜")
     private LocalDate date;
 
-    @Schema(description = "AI 생성 대표 이미지")
-    private String aiGeneratedImage;
+    @Schema(description = "AI 이미지")
+    private String aiImageUrl;
 }

@@ -36,7 +36,7 @@ public class DiaryService {
     public List<DiaryImageResponse> getDiaryImages(String userId) {
         List<Diary> diaries = diaryRepository.findByUserIdOrderByDateDesc(userId);
         return diaries.stream()
-                .filter(diary -> diary.getAiGeneratedImage() != null && !diary.getAiGeneratedImage().isEmpty())
+                .filter(diary -> diary.getAiImageUrl() != null && !diary.getAiImageUrl().isEmpty())
                 .map(this::convertToImageResponse)
                 .collect(Collectors.toList());
     }
@@ -47,19 +47,13 @@ public class DiaryService {
             throw new IllegalArgumentException("해당 날짜에 이미 일기가 작성되었습니다.");
         }
 
-        // 사용자 첨부 이미지는 최대 3개
-        if (request.getUserUploadedImages() != null && request.getUserUploadedImages().size() > 3) {
-            throw new IllegalArgumentException("이미지 첨부는 최대 3개까지 가능합니다.");
-        }
-
         Diary diary = new Diary();
         diary.setUserId(userId);
         diary.setDate(request.getDate());
         diary.setTitle(request.getTitle());
         diary.setContent(request.getContent());
         diary.setEmotionCategory(request.getEmotionCategory());
-        diary.setAiGeneratedImage(request.getAiGeneratedImage());
-        diary.setUserUploadedImages(request.getUserUploadedImages());
+        diary.setAiImageUrl(request.getAiImageUrl());
 
         Diary savedDiary = diaryRepository.save(diary);
         return convertToResponse(savedDiary);
@@ -73,16 +67,10 @@ public class DiaryService {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
 
-        // 사용자 첨부 이미지는 최대 3개
-        if (request.getUserUploadedImages() != null && request.getUserUploadedImages().size() > 3) {
-            throw new IllegalArgumentException("이미지 첨부는 최대 3개까지 가능합니다.");
-        }
-
-        // 수정 가능한 필드들만 업데이트 (날짜, AI 이미지는 수정 불가)
+        // 수정 가능한 필드들만 업데이트 (제목, 내용, 감정 카테고리)
         diary.setTitle(request.getTitle());
         diary.setContent(request.getContent());
         diary.setEmotionCategory(request.getEmotionCategory());
-        diary.setUserUploadedImages(request.getUserUploadedImages());
 
         Diary updatedDiary = diaryRepository.save(diary);
         return convertToResponse(updatedDiary);
@@ -119,8 +107,7 @@ public class DiaryService {
         response.setTitle(diary.getTitle());
         response.setContent(diary.getContent());
         response.setEmotionCategory(diary.getEmotionCategory());
-        response.setAiGeneratedImage(diary.getAiGeneratedImage());
-        response.setUserUploadedImages(diary.getUserUploadedImages());
+        response.setAiImageUrl(diary.getAiImageUrl());
         response.setScraped(diary.isScraped());
         response.setCreatedAt(diary.getCreatedAt());
         response.setUpdatedAt(diary.getUpdatedAt());
@@ -131,7 +118,7 @@ public class DiaryService {
         DiaryImageResponse response = new DiaryImageResponse();
         response.setId(diary.getId());
         response.setDate(diary.getDate());
-        response.setAiGeneratedImage(diary.getAiGeneratedImage());
+        response.setAiImageUrl(diary.getAiImageUrl());
         return response;
     }
 }

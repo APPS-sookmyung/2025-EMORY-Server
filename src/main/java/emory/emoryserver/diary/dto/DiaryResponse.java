@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -28,11 +27,8 @@ public class DiaryResponse {
     @Schema(description = "감정 카테고리")
     private EmotionCategory emotionCategory;
 
-    @Schema(description = "AI 생성 대표 이미지")
-    private String aiGeneratedImage;
-
-    @Schema(description = "사용자 첨부 이미지")
-    private List<String> userUploadedImages;
+    @Schema(description = "AI 이미지")
+    private String aiImageUrl;
 
     @Schema(description = "스크랩 여부")
     private boolean isScraped;
