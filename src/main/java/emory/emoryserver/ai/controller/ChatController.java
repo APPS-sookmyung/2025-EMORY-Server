@@ -4,7 +4,7 @@ package emory.emoryserver.ai.controller;
 import emory.emoryserver.ai.dto.chat.ChatMessageRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatSaveRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatStartRequestDto;
-import emory.emoryserver.ai.dto.chat.DiaryGenerateRequestDto;
+import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;

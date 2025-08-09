@@ -1,4 +1,4 @@
-package emory.emoryserver.ai.dto.chat;
+package emory.emoryserver.aidiary.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
