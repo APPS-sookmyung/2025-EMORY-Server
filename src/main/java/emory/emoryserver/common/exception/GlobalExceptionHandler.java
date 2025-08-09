@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import emory.emoryserver.aidiary.exception.DiaryNotFoundException;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +18,14 @@ import java.util.Map;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    // aidiary 도메인 예외처리
+    @ExceptionHandler(DiaryNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDiaryNotFound(DiaryNotFoundException e) {
+        log.warn("Diary not found: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.getMessage()));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
