@@ -13,6 +13,7 @@ import emory.emoryserver.aidiary.service.AiDiaryService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,12 +82,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 chatLogs.get(session.getId())
                         .add("[" + LocalDateTime.now() + "] AI: " + aiReply);
                 // 클라이언트 전송
-                safeSend(session, "AI_MESSAGE", Map.of(
-                        "sessionId", req.getSessionId(),
-                        "sender", "AI",
-                        "message", aiReply,
-                        "timestamp", LocalDateTime.now().toString()
-                ));
+                safeSend(session, "AI_MESSAGE", new HashMap<String, Object>() {{
+                    put("sessionId", req.getSessionId());
+                    put("sender", "AI");
+                    put( "message", aiReply);
+                    put("timestamp", LocalDateTime.now().toString());
+                }});
+
 
             } else if (req.getType() == MessageType.FINISH_CHAT) {
                 // 일기 생성 시도 (서비스 시그니처 맞춰서 호출)
