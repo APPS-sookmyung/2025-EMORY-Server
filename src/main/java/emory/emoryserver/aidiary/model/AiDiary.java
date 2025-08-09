@@ -1,16 +1,19 @@
 package emory.emoryserver.aidiary.model;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "ai_diaries") // mongoDB 컬렉션명
 public class AiDiary {
     @Id
@@ -18,11 +21,20 @@ public class AiDiary {
 
     private String sessionId;
     private String userId;
+
+    private String title;
     private String content;
 
-    // 이미지 URL 필드 추가
-    private String imageUrl;
+    private String mood;
+    private String imageId;
 
+    private Integer version;  // ex: 1
+    private String status;    // "DRAFT" | "FINAL"
+    private Boolean editable; // true/false
+
+    private LocalDate dateofDay;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private List<DiaryEdit> history;
 }
