@@ -32,7 +32,7 @@ public class AiDiary {
     private String status;    // "DRAFT" | "FINAL"
     private Boolean editable; // true/false
 
-    private LocalDate dateofDay;
+    private LocalDate dateOfDay;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

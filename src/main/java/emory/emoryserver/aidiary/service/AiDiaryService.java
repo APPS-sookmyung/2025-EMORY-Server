@@ -1,8 +1,11 @@
 package emory.emoryserver.aidiary.service;
 
+import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
+import emory.emoryserver.aidiary.dto.DiaryResponseDto;
 import emory.emoryserver.aidiary.model.AiDiary;
 import emory.emoryserver.aidiary.model.DiaryEdit;
 import emory.emoryserver.aidiary.repository.AiDiaryRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import emory.emoryserver.aidiary.exception.DiaryNotFoundException;
@@ -68,11 +71,36 @@ public class AiDiaryService {
         //4. mongoDB에 저장
         return aiDiaryRepository.save(diary);
     }
+
     //간단 제목 생성(임시)
     private String makeTitleFrom(String content) {
         if (content == null || content.isBlank()) return "오늘의 기록";
         String firstLine = content.strip().lines().findFirst().orElse("오늘의 기록");
         return firstLine.length() > 20 ? firstLine.substring(0, 20) + "…" : firstLine;
+    }
+
+    public DiaryResponseDto generateDiaryFromChat(DiaryGenerateRequestDto req) {
+        AiDiary saved = generateDiaryFromChat(
+                req.getChatLogs(),
+                req.getSessionId(),
+                req.getUserId()
+        );
+        return toResponse(saved);
+    }
+    private DiaryResponseDto toResponse(AiDiary d) {
+        return DiaryResponseDto.builder()
+                .diaryId(d.getId())
+                .title(d.getTitle())
+                .diaryText(d.getContent())
+                .emotion(d.getMood())
+                .imageId(d.getImageId())
+                .version(d.getVersion())
+                .status(d.getStatus())
+                .editable(d.getEditable())
+                .date(d.getDateOfDay())
+                .createdAt(d.getCreatedAt())
+                .updatedAt(d.getUpdatedAt())
+                .build();
     }
 
     // 일기 수정
@@ -84,13 +112,5 @@ public class AiDiaryService {
 
     }
 
-    /*
-    저장된 일기 조회
-    @param diaryId MongoDB objectId
-    @return AiDiary
-     */
-    public AiDiary getDiaryById(String diaryId) {
-        return aiDiaryRepository.findById(diaryId)
-                .orElseThrow(() -> new DiaryNotFoundException(diaryId));
-    }
 }
+
