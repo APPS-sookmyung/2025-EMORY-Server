@@ -22,7 +22,6 @@ public class ChatMessageRequestDto {
     @NotBlank(message = "userId는 필수입니다.")
     private String userId;
 
-    @Schema(description = "사용자 메시지", example = "오늘 너무 힘들었어")
-    @NotBlank(message = "userMessage는 필수입니다.")
+    // MESSAGE일때만 필수 -> 핸들러에서 조건부 검사 유지
     private String userMessage;
 }
