@@ -4,6 +4,7 @@ import emory.emoryserver.aidiary.model.AiDiary;
 import emory.emoryserver.aidiary.repository.AiDiaryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import emory.emoryserver.aidiary.exception.DiaryNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +23,15 @@ public class AiDiaryService {
     @return 저장된 AiDiary 객체
      */
     public AiDiary generateDiaryFromChat(List<String> chatLogs, String sessionId, String userId) {
+        if (chatLogs == null || chatLogs.isEmpty()) {
+            throw new IllegalArgumentException("chatLogs cannot be null or empty");
+        }
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            throw new IllegalArgumentException("sessionId cannot be null or empty");
+        }
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("userId cannot be null or empty");
+        }
         //1. 대화 로그 기반으로 일기 내용 생성 (현재는 단순 합침, 추후 AI 모델 연동)
         String content = String.join("\n", chatLogs);
         //2. AiDiary 엔터티 생성
@@ -37,7 +47,7 @@ public class AiDiaryService {
     // 일기 수정
     public AiDiary updateDiaryContent(String diaryId, String content) {
         AiDiary diary = aiDiaryRepository.findById(diaryId)
-                .orElseThrow(() -> new RuntimeException("Diary not found with id " + diaryId));
+                .orElseThrow(() -> new DiaryNotFoundException(diaryId));
         diary.setContent(content);
         return aiDiaryRepository.save(diary);
 
@@ -50,6 +60,6 @@ public class AiDiaryService {
      */
     public AiDiary getDiaryById(String diaryId) {
         return aiDiaryRepository.findById(diaryId)
-                .orElseThrow(() -> new RuntimeException("Diary not found with id" + diaryId));
+                .orElseThrow(() -> new DiaryNotFoundException(diaryId));
     }
 }
