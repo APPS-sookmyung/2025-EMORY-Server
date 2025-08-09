@@ -50,6 +50,29 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (request.getUserId() != null && !sessionUserMap.containsKey(session.getId())) {
             sessionUserMap.put(session.getId(), request.getUserId());
         }
+        // **종료 요청 처리**
+        if ("FINISH_CHAT".equalsIgnoreCase(request.getType())) {
+            List<String> logs = chatLogs.get(session.getId());
+            String userId = sessionUserMap.get(session.getId());
+            String sessionId = request.getSessionId();
+
+            if (logs != null && userId != null) {
+                AiDiary savedDiary = aiDiaryService.generateDiaryFromChat(logs, sessionId, userId);
+
+                // diaryId 응답
+                Map<String, Object> response = new HashMap<>();
+                response.put("type", "DIARY_CREATED");
+                response.put("diaryId", savedDiary.getId());
+                session.sendMessage(new TextMessage(objectMapper.writeValueAsString(response)));
+            }
+
+            // 세션 정리 및 종료
+            chatLogs.remove(session.getId());
+            sessionUserMap.remove(session.getId());
+            session.close();
+            return;
+        }
+
 
         // USER 메시지 로그 저장
         chatLogs.get(session.getId()).add("USER: " + request.getUserMessage());
