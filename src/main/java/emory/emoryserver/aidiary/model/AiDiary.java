@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Document(collation = "ai_diaries") // mongoDB 컬렉션명
+@Document(collection = "ai_diaries") // mongoDB 컬렉션명
 public class AiDiary {
     @Id
     private String id;
