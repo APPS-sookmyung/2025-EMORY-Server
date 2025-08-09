@@ -9,19 +9,19 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 @Configuration
 @EnableWebSocket
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
     private final ChatWebSocketHandler chatWebSocketHandler;
 
-    //생성자 주입
-    public WebSocketConfig(ChatWebSocketHandler chatWebSocketHandler) {
-        this.chatWebSocketHandler = chatWebSocketHandler;
-    }
-
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(chatWebSocketHandler, "/chat")
-                .setAllowedOrigins("*"); //CORS 허용
+                .setAllowedOrigins(
+                        "http://localhost:3000" // 개발용 프론트 도메인 넣음
+                        // 나중에 배포해서 연결할때는 운영 프론트 도메인 주소 추가 하겠습니다
+
+                );
 
     }
 }
