@@ -29,7 +29,7 @@ public class DiaryEditController {
                 .orElseThrow(() -> new RuntimeException("Diary not found"));
 
         diary.setContent(request.getContent());
-        diary.setImageUrl(request.getImageUrl());
+        diary.setImageId(request.getImageId());
         diary.setUpdatedAt(LocalDateTime.now());
 
         AiDiary savedDiary = aiDiaryRepository.save(diary);

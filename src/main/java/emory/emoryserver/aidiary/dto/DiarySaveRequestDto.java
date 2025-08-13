@@ -12,5 +12,5 @@ import java.time.LocalDate;
 public class DiarySaveRequestDto {
     private String diaryId;      // MongoDB ObjectId
     private String content;      // 수정된 일기 내용
-    private String imageUrl;     // AI가 생성한 이미지 URl
+    private String imageId;     // AI가 생성한 이미지 URl
 }
