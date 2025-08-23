@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DiaryResponseDto {
+public class DiaryGenerateResponseDto {
     @Schema(description = "일기 ID")
     private String diaryId;
 
@@ -19,7 +19,7 @@ public class DiaryResponseDto {
     private String title;
 
     @Schema(description = "AI가 생성한 일기 내용")
-    private String diaryText;
+    private String content;
 
     @Schema(description = "감정 태그", example = "슬픔")
     private String emotion;
