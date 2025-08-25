@@ -1,6 +1,9 @@
 package emory.emoryserver.global.config.auth;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,7 +15,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,23 +27,34 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     @Value("${jwt.secret}")
-    private String secretKey;
+    private String secretKeyRaw;
+
+    @Value("${jwt.expiration:3600000}")
+    private long tokenValidTime;
 
     private Key key;
 
-    // 토큰 유효 시간: 1시간
-    private final long tokenValidTime = 1000L * 60 * 60;
-
-    // Bean 생성 후 시크릿 키 초기화
     @PostConstruct
     protected void init() {
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secretKeyRaw);
+        } catch (IllegalArgumentException e) {
+            keyBytes = secretKeyRaw.getBytes(StandardCharsets.UTF_8);
+        }
+
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                    "JWT secret must be at least 32 bytes (256 bits). Current: " + keyBytes.length + " bytes");
+        }
+
+        this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // JWT 생성 - 이메일과 권한 리스트 포함
+    // JWT 생성 - 이메일(subject)과 역할 리스트 포함
     public String createToken(String email, List<String> roles) {
         Claims claims = Jwts.claims().setSubject(email); // sub = email
-        claims.put("roles", roles); // 사용자 역할 추가
+        claims.put("roles", roles);
 
         Date now = new Date();
         Date expiry = new Date(now.getTime() + tokenValidTime);
@@ -51,42 +67,57 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // JWT로부터 인증 정보 추출
+    // JWT로부터 Authentication 추출
     public Authentication getAuthentication(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
-        String email = claims.getSubject(); // sub에서 이메일 추출
+        String email = claims.getSubject();
 
-        @SuppressWarnings("unchecked")
-        List<String> roles = (List<String>) claims.get("roles");
+        Object rolesObj = claims.get("roles");
+        List<String> roles;
+        if (rolesObj instanceof List<?> list) {
+            roles = list.stream().map(String::valueOf).collect(Collectors.toList());
+        } else {
+            roles = Collections.emptyList();
+        }
 
         List<GrantedAuthority> authorities = roles.stream()
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
-        // principal = email (String)
         return new UsernamePasswordAuthenticationToken(email, "", authorities);
     }
 
-    // JWT에서 이메일 추출
+    // JWT에서 이메일(subject) 추출
     public String getUsername(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody().getSubject();
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     // JWT 유효성 검증
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (Exception e) {
+
             return false;
         }
     }
 
-    // Request 헤더에서 Authorization: Bearer <token> 추출
+    // Request 헤더에서 Bearer <token> 추출
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {

@@ -20,14 +20,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    private static final List<String> WHITELIST = List.of(            "/api/auth",
+    private static final List<String> WHITELIST = List.of(
+            "/",
+            "/ping",
             "/api/auth",
             "/v3/api-docs",
             "/swagger",
             "/swagger-ui",
             "/swagger-resources",
             "/webjars",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/actuator"
     );
 
     private boolean isWhitelisted(String path) {
