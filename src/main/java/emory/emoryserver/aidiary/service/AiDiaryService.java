@@ -1,7 +1,7 @@
 package emory.emoryserver.aidiary.service;
 
 import emory.emoryserver.ai.model.ChatLog;
-import emory.emoryserver.ai.repository.ChatMessageRepository;
+import emory.emoryserver.ai.repository.ChatLogRepository;
 import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
 import emory.emoryserver.aidiary.dto.DiaryGenerateResponseDto;
 import emory.emoryserver.aidiary.model.AiDiary;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class AiDiaryService {
     // private final ChatLogRepository ... // 세션/로그 조회 필요 시 주입
     private final AiDiaryRepository aiDiaryRepository;
-    private final ChatMessageRepository chatMessageRepository;
+    private final ChatLogRepository chatLogRepository;
 
     /**
      * 1) DB 저장 대화로그 기반 생성 (실제 사용 버전)
@@ -36,18 +36,17 @@ public class AiDiaryService {
         }
 
         // (sessionId,userId) 기준으로 시간 오름차순 조회 (메서드명은 네 리포지토리에 맞춰 변경)
-        List<ChatLog> messages = chatMessageRepository
-                .findBysessionIdAndUserIdOrderByCreatedAtAsc(req.getSessionId(), userId);
+        List<ChatLog> logs = chatLogRepository
+                .findBySessionIdAndUserIdOrderByCreatedAtAsc(req.getSessionId(), userId);
 
-        if (messages.isEmpty()) {
-            throw new IllegalArgumentException("대화 로그가 없습니다. (sessionId=" + req.getSessionId() + ")");
-        }
+        if (logs.isEmpty())
+            throw new IllegalArgumentException("대화 로그가 없습니다. (sessionId=" + req.getSessionId() + ", userId=" + userId + ")");
+
 
         // USER/AI 모두 포함해 content 구성
-        String content = messages.stream()
+        String content = logs.stream()
                 .map(m -> prefix(m.getRole()) + safe(m.getText()))
                 .collect(Collectors.joining("\n"));
-
         // 너무 길면 컷
         if (content.length() > 10_000) content = content.substring(0, 10_000) + " …";
 
@@ -57,27 +56,30 @@ public class AiDiaryService {
         // 일기 날짜: 요청값 or 마지막 메시지 시각 or 오늘
         LocalDate day = req.getDateOfDay() != null
                 ? req.getDateOfDay()
-                : (messages.get(messages.size() - 1).getCreatedAt() != null
-                ? messages.get(messages.size() - 1).getCreatedAt().toLocalDate()
-                : LocalDate.now());
+                : (logs.get(logs.size() - 1).getCreatedAt() != null
+                    ? logs.get(logs.size() - 1).getCreatedAt().toLocalDate()
+                    : LocalDate.now());
 
         // DRAFT v1 저장 + history 스냅샷
-        AiDiary diary = new AiDiary();
-        diary.setSessionId(req.getSessionId());
-        diary.setUserId(userId);
-        diary.setTitle(title);                 // ✅ 누락되어 있던 부분 추가
-        diary.setContent(content);
-        diary.setMood(null);
-        diary.setImageId(null);
-        diary.setVersion(1);
-        diary.setStatus("DRAFT");
-        diary.setEditable(true);
-        diary.setDateOfDay(day);
-        diary.setCreatedAt(LocalDateTime.now());
-        diary.setUpdatedAt(LocalDateTime.now());
+        AiDiary d = new AiDiary();
+        d.setSessionId(req.getSessionId());
+        d.setUserId(userId);
+        d.setTitle(title);                 // ✅ 누락되어 있던 부분 추가
+        d.setContent(content);
+        d.setMood(null);
+        d.setImageId(null);
+        d.setVersion(1);
+        d.setStatus("DRAFT");
+        d.setEditable(true);
+        d.setDateOfDay(day);
+        d.setCreatedAt(LocalDateTime.now());
+        d.setUpdatedAt(LocalDateTime.now());
 
-        if (diary.getHistory() == null) diary.setHistory(new ArrayList<>());
-        diary.getHistory().add(DiaryEdit.builder()
+        d.setHistory(new ArrayList<>(List.of(
+                DiaryEdit.builder().version(1).title(title).content(content).editedBy("AI")
+                        .editedAt(LocalDateTime.now()).build()
+        )));
+        d.getHistory().add(DiaryEdit.builder()
                 .version(1)
                 .title(title)
                 .content(content)
@@ -85,72 +87,33 @@ public class AiDiaryService {
                 .editedAt(LocalDateTime.now())
                 .editedBy("AI")
                 .build());
-        AiDiary saved = aiDiaryRepository.save(diary);
+
+        AiDiary saved = aiDiaryRepository.save(d);
         return toResponse(saved);
     }
 
-        // 구 입력값 join 버전 -테스트용으로만 유지
-        public AiDiary generateDiaryFromChat (List < String > chatLogs, String sessionId, String userId){
-            if (chatLogs == null || chatLogs.isEmpty()) {
-                throw new IllegalArgumentException("chatLogs cannot be null or empty");
-            }
-            if (sessionId == null || sessionId.trim().isEmpty()) {
-                throw new IllegalArgumentException("sessionId cannot be null or empty");
-            }
-            if (userId == null || userId.trim().isEmpty()) {
-                throw new IllegalArgumentException("userId cannot be null or empty");
-            }
-            String content = String.join("\n", chatLogs);
-            String title = makeTitleFrom(content);
 
-            AiDiary diary = new AiDiary();
-            diary.setSessionId(sessionId);
-            diary.setUserId(userId);
-            diary.setTitle(title);             // ✅ 누락 보완
-            diary.setContent(content);
-            diary.setMood(null);
-            diary.setImageId(null);
-            diary.setVersion(1);
-            diary.setStatus("DRAFT");
-            diary.setEditable(true);
-            diary.setCreatedAt(LocalDateTime.now());
-            diary.setUpdatedAt(LocalDateTime.now());
+    private String prefix(String role) {
+        if (role == null) return "";
+        String r = role.toLowerCase();
+        if ("user".equals(r)) return "[USER] ";
+        if ("assistant".equals(r)) return "[AI] ";
+        return "";
+    }
 
-            if (diary.getHistory() == null) diary.setHistory(new ArrayList<>());
-            diary.getHistory().add(DiaryEdit.builder()
-                    .version(1)
-                    .title(title)
-                    .content(content)
-                    .mood(null)
-                    .editedAt(LocalDateTime.now())
-                    .editedBy("AI")
-                    .build());
+    private String safe(String s) {
+        return (s == null) ? "" : s;
+    }
 
-            return aiDiaryRepository.save(diary);
-        }
+    private String makeTitleFrom(String content) {
+        if (content == null || content.isBlank()) return "오늘의 기록";
+        String firstLine = content.strip().lines().findFirst().orElse("오늘의 기록");
+        return firstLine.length() > 20 ? firstLine.substring(0, 20) + "…" : firstLine;
+    }
 
-
-        private String prefix(String role) {
-            if (role == null) return "";
-            String r = role.toLowerCase();
-            if ("user".equals(r)) return "[USER] ";
-            if ("assistant".equals(r)) return "[AI] ";
-            return "";
-        }
-
-        private String safe(String s) {
-            return (s == null) ? "" : s;
-        }
-
-        private String makeTitleFrom(String content) {
-            if (content == null || content.isBlank()) return "오늘의 기록";
-            String firstLine = content.strip().lines().findFirst().orElse("오늘의 기록");
-            return firstLine.length() > 20 ? firstLine.substring(0, 20) + "…" : firstLine;
-        }
-
-        private DiaryGenerateResponseDto toResponse(final AiDiary d) {
-            if (d == null) return null;
-            return DiaryGenerateResponseDto.builder()
+    private DiaryGenerateResponseDto toResponse(final AiDiary d) {
+        if (d == null) return null;
+        return DiaryGenerateResponseDto.builder()
                     .diaryId(d.getId())
                     .title(d.getTitle())
                     .content(d.getContent())
