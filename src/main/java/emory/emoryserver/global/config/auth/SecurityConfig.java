@@ -38,7 +38,7 @@ public class SecurityConfig {
                                 "/", "/ping", "/error", "/favicon.ico",
                                 "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**",
                                 "/swagger-ui.html", "/webjars/**",
-                                "/actuator/**",
+                                "/actuator/health", "/actuator/info",
                                 "/api/auth/**"
                         ).permitAll()
 
