@@ -4,6 +4,9 @@ import emory.emoryserver.ai.model.ChatLog;
 import emory.emoryserver.ai.repository.ChatLogRepository;
 import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
 import emory.emoryserver.aidiary.dto.DiaryGenerateResponseDto;
+import emory.emoryserver.aidiary.dto.DiarySaveRequestDto;
+import emory.emoryserver.aidiary.dto.DiaryUpdateRequestDto;
+import emory.emoryserver.aidiary.exception.DiaryNotFoundException;
 import emory.emoryserver.aidiary.model.AiDiary;
 import emory.emoryserver.aidiary.model.DiaryEdit;
 import emory.emoryserver.aidiary.repository.AiDiaryRepository;
@@ -15,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -109,6 +113,80 @@ public class AiDiaryService {
         if (content == null || content.isBlank()) return "오늘의 기록";
         String firstLine = content.strip().lines().findFirst().orElse("오늘의 기록");
         return firstLine.length() > 20 ? firstLine.substring(0, 20) + "…" : firstLine;
+    }
+    /** ✅ 일기 수정(버전 + 히스토리 적재) */
+    public DiaryGenerateResponseDto updateDiary(String diaryId, String userId, DiaryUpdateRequestDto req) {
+        AiDiary d = aiDiaryRepository.findByIdAndUserId(diaryId, userId)
+                .orElseThrow(() -> new DiaryNotFoundException(diaryId));
+
+        // DRAFT & editable만 수정 허용
+        if (Boolean.FALSE.equals(d.getEditable()) || !"DRAFT".equalsIgnoreCase(d.getStatus())) {
+            throw new IllegalStateException("편집할 수 없는 상태입니다. (status=" + d.getStatus() + ")");
+        }
+
+        // 낙관적 락(선택)
+        if (req.getExpectedVersion() != null && !Objects.equals(req.getExpectedVersion(), d.getVersion())) {
+            throw new IllegalStateException("버전 충돌이 발생했습니다. 최신 내용을 새로고침 해주세요.");
+        }
+
+        // 변경값 적용 (null이면 기존 유지)
+        String newTitle   = (req.getTitle()   != null) ? req.getTitle()   : d.getTitle();
+        String newContent = (req.getContent() != null) ? req.getContent() : d.getContent();
+
+        // 버전 +1
+        int newVersion = (d.getVersion() == null ? 0 : d.getVersion()) + 1;
+        d.setVersion(newVersion);
+
+        d.setTitle(newTitle);
+        d.setContent(newContent);
+        d.setUpdatedAt(LocalDateTime.now());
+
+        if (d.getHistory() == null) d.setHistory(new ArrayList<>());
+        d.getHistory().add(DiaryEdit.builder()
+                .version(newVersion)
+                .title(newTitle)
+                .content(newContent)
+                .editedBy(userId)
+                .editedAt(LocalDateTime.now())
+                .build());
+
+        AiDiary saved = aiDiaryRepository.save(d);
+        return toResponse(saved);
+    }
+
+    /** ✅ 최종 저장(확정) — 더 이상 수정 불가 */
+    public DiaryGenerateResponseDto finalizeDiary(DiarySaveRequestDto req, String userId) {
+        AiDiary d = aiDiaryRepository.findByIdAndUserId(req.getDiaryId(), userId)
+                .orElseThrow(() -> new DiaryNotFoundException(req.getDiaryId()));
+
+        if ("FINAL".equalsIgnoreCase(d.getStatus())) {
+            return toResponse(d); // 이미 확정됨
+        }
+
+
+        // (선택) 대표 이미지 고정까지 함께 처리하려면 주석 해제
+        // if (req.getPrimaryImageId() != null) {
+        //     d.setPrimaryImageId(req.getPrimaryImageId());
+        // }
+
+        int newVersion = (d.getVersion() == null ? 0 : d.getVersion()) + 1;
+        d.setVersion(newVersion);
+        d.setStatus("FINAL");
+        d.setEditable(false);
+        d.setUpdatedAt(LocalDateTime.now());
+
+        if (d.getHistory() == null) d.setHistory(new ArrayList<>());
+        d.getHistory().add(DiaryEdit.builder()
+                .version(newVersion)
+                .title(d.getTitle())
+                .content(d.getContent())
+                .mood(d.getMood())
+                .editedBy("FINALIZE:" + userId)
+                .editedAt(LocalDateTime.now())
+                .build());
+
+        AiDiary saved = aiDiaryRepository.save(d);
+        return toResponse(saved);
     }
 
     private DiaryGenerateResponseDto toResponse(final AiDiary d) {

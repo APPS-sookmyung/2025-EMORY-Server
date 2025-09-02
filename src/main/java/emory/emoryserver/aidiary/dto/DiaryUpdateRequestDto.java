@@ -13,11 +13,11 @@ public class DiaryUpdateRequestDto {
     @Schema(description = "수정할 내용")
     private String content;        // null이면 유지
 
-    @Schema(description = "수정할 감정", example = "슬픔")
-    private String mood;           // null이면 유지
+    //@Schema(description = "수정할 감정", example = "슬픔")
+    //private String mood;           // null이면 유지
 
-    @Schema(description = "수정할 이미지 ID")
-    private String imageId;        // null이면 유지
+    //@Schema(description = "수정할 이미지 ID")
+    //private String imageId;        // null이면 유지
 
     @Schema(description = "낙관적 락을 위한 기대 버전", example = "1")
     private Integer expectedVersion; // 선택(보내면 버전충돌 방지)
