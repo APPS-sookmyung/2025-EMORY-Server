@@ -2,15 +2,12 @@ package emory.emoryserver.aidiary.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
-import java.time.LocalDate;
 
-@Getter
-@Setter
+@Data
 public class DiarySaveRequestDto {
+
+    @Schema(description = "저장(확정)할 일기 ID")
     private String diaryId;      // MongoDB ObjectId
-    private String content;      // 수정된 일기 내용
-    private String imageUrl;     // AI가 생성한 이미지 URl
+   // private String imageId;     // AI가 생성한 이미지 URl
 }
