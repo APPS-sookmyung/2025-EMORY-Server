@@ -1,0 +1,46 @@
+substitutions:
+  _REGION: "asia-northeast3"
+  _REPO: "emory-repo"
+  _SERVICE: "emory-server"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # 1) Gradle 빌드
+  - name: 'gcr.io/cloud-builders/gradle'
+    entrypoint: 'bash'
+    args: ['-c', './gradlew clean build -x test']
+    id: 'Gradle Build'
+
+  # 2) Docker 이미지 빌드
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build', '-t',
+        'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
+        '.'
+      ]
+    id: 'Docker Build'
+
+  # 3) Artifact Registry 푸시
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
+    id: 'Push Image'
+
+  # 4) Cloud Run 배포 (무트래픽: 사용자 영향 X, 검증용)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run','deploy','${_SERVICE}',
+        '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
+        '--region','${_REGION}',
+        '--platform','managed',
+        '--no-traffic',      # 새 리비전을 0%로 배포
+        '--port','8080'
+      ]
+    id: 'Deploy to Cloud Run'
+
+images:
+  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
