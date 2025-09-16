@@ -28,7 +28,7 @@ steps:
     args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
     id: 'Push Image'
 
-  # 4) Cloud Run 배포 (무트래픽: 사용자 영향 X, 검증용)
+  # 4) Cloud Run 배포 (무트래픽, 검증용)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
