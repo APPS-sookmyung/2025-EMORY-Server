@@ -37,7 +37,7 @@ steps:
         '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
         '--region','${_REGION}',
         '--platform','managed',
-        '--no-traffic',      # 새 리비전을 0%로 배포
+        '--no-traffic',
         '--port','8080'
       ]
     id: 'Deploy to Cloud Run'
