@@ -9,6 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,63 +20,52 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private static final AntPathMatcher matcher = new AntPathMatcher();
 
     private static final List<String> WHITELIST = List.of(
             "/",
             "/ping",
-            "/api/auth",
-            "/v3/api-docs",
-            "/swagger",
-            "/swagger-ui",
-            "/swagger-resources",
-            "/webjars",
+            "/api/auth/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-resources/**",
+            "/webjars/**",
             "/favicon.ico",
-            "/actuator"
+            "/actuator/health"
     );
 
-    private boolean isWhitelisted(String path) {
-        return WHITELIST.stream().anyMatch(path::contains);
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return WHITELIST.stream().anyMatch(p -> matcher.match(p, path));
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest req,
+                                    HttpServletResponse res,
+                                    FilterChain chain)
+            throws IOException, ServletException {
 
-        String path = request.getRequestURI();
-
-        if (isWhitelisted(path)) {
-            filterChain.doFilter(request, response);
+        String auth = req.getHeader("Authorization");
+        if (auth == null || !auth.startsWith("Bearer ")) {
+            chain.doFilter(req, res);
             return;
         }
 
         try {
-            String token = jwtTokenProvider.resolveToken(request);
-            System.out.println("추출된 토큰: " + token);
-
+            String token = jwtTokenProvider.resolveToken(req);
             if (token != null && jwtTokenProvider.validateToken(token)) {
                 var authentication = jwtTokenProvider.getAuthentication(token);
-
                 if (authentication != null) {
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            (UsernamePasswordAuthenticationToken) authentication;
-
-                    System.out.println("인증 성공: " + authenticationToken.getPrincipal());
+                    var authenticationToken = (UsernamePasswordAuthenticationToken) authentication;
                     authenticationToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request));
+                            new WebAuthenticationDetailsSource().buildDetails(req));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                } else {
-                    System.out.println("authentication == null");
                 }
-            } else {
-                System.out.println("토큰 없음 or 유효하지 않음");
             }
         } catch (Exception e) {
-            System.out.println("필터 처리 중 예외 발생: " + e.getMessage());
         }
 
-        filterChain.doFilter(request, response);
+        chain.doFilter(req, res);
     }
-
 }
