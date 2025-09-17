@@ -7,29 +7,45 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1) Gradle 빌드
+  # 0) 디버그(현재 폴더에 gradlew 있는지 확인)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "PWD=$(pwd)"
+        ls -la | sed -n '1,200p'
+        test -f gradlew && echo "[OK] gradlew exists" || (echo "[MISS] gradlew not found"; exit 1)
+
+  # 1) Gradle 빌드 (루트에서 실행)
   - name: 'gcr.io/cloud-builders/gradle'
-    dir: '2025-EMORY-Server'
-    entrypoint: 'bash'
-    args: ['-c', './gradlew clean build -x test']
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        # 개행/BOM/권한 보정(안전빵)
+        sed -i 's/\r$//' gradlew || true
+        perl -0777 -pe 's/^\xEF\xBB\xBF//' -i gradlew || true
+        chmod +x gradlew || true
+        /bin/sh ./gradlew clean build -x test
     id: 'Gradle Build'
 
-  # 2) Docker 이미지 빌드
+  # 2) Docker 이미지 빌드 (Dockerfile이 리포 루트에 있다는 가정)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
-        'build', '-t',
+        'build','-t',
         'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
         '.'
       ]
     id: 'Docker Build'
 
-  # 3) Artifact
+  # 3) 푸시
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
+    args: ['push','asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
     id: 'Push Image'
 
-  # 4) Cloud Run 배포 (무트래픽, 검증용)
+  # 4) Cloud Run 배포(무트래픽)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
