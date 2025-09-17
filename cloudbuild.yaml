@@ -23,7 +23,7 @@ steps:
       ]
     id: 'Docker Build'
 
-  # 3) Artifact Registry 푸시
+  # 3) Artifact
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
     id: 'Push Image'
