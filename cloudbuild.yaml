@@ -9,6 +9,7 @@ options:
 steps:
   # 1) Gradle 빌드
   - name: 'gcr.io/cloud-builders/gradle'
+    dir: '2025-EMORY-Server'
     entrypoint: 'bash'
     args: ['-c', './gradlew clean build -x test']
     id: 'Gradle Build'
