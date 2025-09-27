@@ -1,22 +1,19 @@
 package emory.emoryserver.diary.dto;
 
-import emory.emoryserver.common.enums.EmotionCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Schema(description = "일기 응답")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DiaryResponse {
     @Schema(description = "일기 ID")
-    private String id;
-
-    @Schema(description = "일기 날짜")
-    private LocalDate date;
+    private String diaryId;
 
     @Schema(description = "일기 제목")
     private String title;
@@ -24,18 +21,24 @@ public class DiaryResponse {
     @Schema(description = "일기 내용")
     private String content;
 
-    @Schema(description = "감정 카테고리")
-    private EmotionCategory emotionCategory;
+    @Schema(description = "감정 태그", example = "기쁨")
+    private String emotion;
 
-    @Schema(description = "AI 이미지")
-    private String aiImageUrl;
+    @Schema(description = "이미지 ID")
+    private String imageId;
 
     @Schema(description = "스크랩 여부")
-    private boolean isScraped;
+    private Boolean scraped;
 
-    @Schema(description = "작성일시")
+    @Schema(description = "상태 (항상 FINAL)", example = "FINAL")
+    private String status;
+
+    @Schema(description = "일기 날짜", example = "2025-09-20")
+    private LocalDate date;
+
+    @Schema(description = "생성 시각")
     private LocalDateTime createdAt;
 
-    @Schema(description = "수정일시")
+    @Schema(description = "수정 시각")
     private LocalDateTime updatedAt;
 }

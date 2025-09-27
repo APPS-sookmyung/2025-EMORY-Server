@@ -1,124 +1,132 @@
 package emory.emoryserver.diary.service;
 
-import emory.emoryserver.diary.dto.DiaryCreateRequest;
-import emory.emoryserver.diary.dto.DiaryImageResponse;
-import emory.emoryserver.diary.dto.DiaryListResponse;
+import emory.emoryserver.aidiary.exception.DiaryNotFoundException;
+import emory.emoryserver.aidiary.model.AiDiary;
+import emory.emoryserver.aidiary.repository.AiDiaryRepository;
+import emory.emoryserver.diary.dto.DiaryImage;
 import emory.emoryserver.diary.dto.DiaryResponse;
-import emory.emoryserver.diary.dto.DiaryUpdateRequest;
-import emory.emoryserver.diary.entity.Diary;
-import emory.emoryserver.diary.repository.DiaryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class DiaryService {
-    private final DiaryRepository diaryRepository;
 
-    public DiaryListResponse getDiaryList(String userId) {
-        List<Diary> diaries = diaryRepository.findByUserIdOrderByDateDesc(userId);
-        List<DiaryResponse> diaryResponses = diaries.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+    private final AiDiaryRepository aiDiaryRepository;
+    private final MongoTemplate mongoTemplate;
 
-        DiaryListResponse response = new DiaryListResponse();
-        response.setDiaries(diaryResponses);
-        response.setCanWriteToday(!diaryRepository.findByUserIdAndDate(userId, LocalDate.now()).isPresent());
-        response.setTodayDate(LocalDate.now().toString());
+    /**
+     * 전체 일기 목록 조회 (최신순)
+     * FINAL 상태의 일기만 조회
+     */
+    public List<DiaryResponse> getAllDiaries(String userId) {
+        // FINAL 상태의 일기만 조회하는 쿼리
+        Query query = new Query();
+        query.addCriteria(Criteria.where("userId").is(userId));
+        query.addCriteria(Criteria.where("status").is("FINAL"));
+        query.with(org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Direction.DESC, "dateOfDay"));
 
-        return response;
-    }
-
-    public List<DiaryImageResponse> getDiaryImages(String userId) {
-        List<Diary> diaries = diaryRepository.findByUserIdOrderByDateDesc(userId);
+        List<AiDiary> diaries = mongoTemplate.find(query, AiDiary.class);
         return diaries.stream()
-                .filter(diary -> diary.getAiImageUrl() != null && !diary.getAiImageUrl().isEmpty())
-                .map(this::convertToImageResponse)
+                .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
 
-    public DiaryResponse createDiary(String userId, DiaryCreateRequest request) {
-        // 하루에 하나의 일기만 작성 가능
-        if (diaryRepository.findByUserIdAndDate(userId, request.getDate()).isPresent()) {
-            throw new IllegalArgumentException("해당 날짜에 이미 일기가 작성되었습니다.");
+    /**
+     * 이미지가 있는 일기 목록 조회 (최신순)
+     * FINAL 상태 + 이미지가 있는 일기만
+     */
+    public List<DiaryImage> getDiaryImages(String userId, Integer year) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("userId").is(userId));
+        query.addCriteria(Criteria.where("status").is("FINAL"));
+        query.addCriteria(Criteria.where("imageId").ne(null).ne(""));
+
+        if (year != null) {
+            LocalDate startDate = LocalDate.of(year, 1, 1);
+            LocalDate endDate = LocalDate.of(year + 1, 1, 1);
+            query.addCriteria(Criteria.where("dateOfDay").gte(startDate).lt(endDate));
         }
 
-        Diary diary = new Diary();
-        diary.setUserId(userId);
-        diary.setDate(request.getDate());
-        diary.setTitle(request.getTitle());
-        diary.setContent(request.getContent());
-        diary.setEmotionCategory(request.getEmotionCategory());
-        diary.setAiImageUrl(request.getAiImageUrl());
+        query.with(org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Direction.DESC, "dateOfDay"));
 
-        Diary savedDiary = diaryRepository.save(diary);
-        return convertToResponse(savedDiary);
+        List<AiDiary> diaries = mongoTemplate.find(query, AiDiary.class);
+        return diaries.stream()
+                .map(this::toImageDto)
+                .collect(Collectors.toList());
     }
 
-    public DiaryResponse updateDiary(String userId, String diaryId, DiaryUpdateRequest request) {
-        Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
+    /**
+     * 일기 삭제
+     * FINAL 상태의 일기만 삭제 가능
+     */
+    public void deleteDiary(String diaryId, String userId) {
+        AiDiary diary = aiDiaryRepository.findByIdAndUserId(diaryId, userId)
+                .orElseThrow(() -> new DiaryNotFoundException(diaryId));
 
-        if (!diary.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("권한이 없습니다.");
+        // FINAL 상태가 아니면 삭제 불가 (안전장치)
+        if (!"FINAL".equals(diary.getStatus())) {
+            throw new IllegalStateException("최종 저장되지 않은 일기는 삭제할 수 없습니다.");
         }
 
-        // 수정 가능한 필드들만 업데이트 (제목, 내용, 감정 카테고리)
-        diary.setTitle(request.getTitle());
-        diary.setContent(request.getContent());
-        diary.setEmotionCategory(request.getEmotionCategory());
-
-        Diary updatedDiary = diaryRepository.save(diary);
-        return convertToResponse(updatedDiary);
+        aiDiaryRepository.delete(diary);
     }
 
-    public void deleteDiary(String userId, String diaryId) {
-        Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
+    /**
+     * 스크랩 토글
+     * scraped 필드를 true ↔ false 전환
+     */
+    public DiaryResponse toggleScrap(String diaryId, String userId) {
+        AiDiary diary = aiDiaryRepository.findByIdAndUserId(diaryId, userId)
+                .orElseThrow(() -> new DiaryNotFoundException(diaryId));
 
-        if (!diary.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("권한이 없습니다.");
+        // 스크랩 상태 토글
+        diary.setScraped(!Boolean.TRUE.equals(diary.getScraped()));
+        diary.setUpdatedAt(LocalDateTime.now());
+
+        AiDiary updatedDiary = aiDiaryRepository.save(diary);
+        return toResponseDto(updatedDiary);
+    }
+
+    // AiDiary를 DiaryResponse로 변환
+    private DiaryResponse toResponseDto(AiDiary diary) {
+        String content = null;
+        if (diary.getContent() != null) {
+            content = diary.getContent().length() > 100
+                    ? diary.getContent().substring(0, 100) + "..."
+                    : diary.getContent();
         }
 
-        diaryRepository.delete(diary);
+        return DiaryResponse.builder()
+                .diaryId(diary.getId())
+                .title(diary.getTitle())
+                .content(content)
+                .emotion(diary.getMood())
+                .imageId(diary.getImageId())
+                .scraped(diary.getScraped())
+                .status(diary.getStatus())
+                .date(diary.getDateOfDay())
+                .createdAt(diary.getCreatedAt())
+                .updatedAt(diary.getUpdatedAt())
+                .build();
     }
 
-    public DiaryResponse toggleScrap(String userId, String diaryId) {
-        Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
-
-        if (!diary.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("권한이 없습니다.");
-        }
-
-        diary.setScraped(!diary.isScraped());
-        Diary updatedDiary = diaryRepository.save(diary);
-        return convertToResponse(updatedDiary);
-    }
-
-    private DiaryResponse convertToResponse(Diary diary) {
-        DiaryResponse response = new DiaryResponse();
-        response.setId(diary.getId());
-        response.setDate(diary.getDate());
-        response.setTitle(diary.getTitle());
-        response.setContent(diary.getContent());
-        response.setEmotionCategory(diary.getEmotionCategory());
-        response.setAiImageUrl(diary.getAiImageUrl());
-        response.setScraped(diary.isScraped());
-        response.setCreatedAt(diary.getCreatedAt());
-        response.setUpdatedAt(diary.getUpdatedAt());
-        return response;
-    }
-
-    private DiaryImageResponse convertToImageResponse(Diary diary) {
-        DiaryImageResponse response = new DiaryImageResponse();
-        response.setId(diary.getId());
-        response.setDate(diary.getDate());
-        response.setAiImageUrl(diary.getAiImageUrl());
-        return response;
+    // AiDiary를 DiaryImage로 변환
+    private DiaryImage toImageDto(AiDiary diary) {
+        return DiaryImage.builder()
+                .diaryId(diary.getId())
+                .imageId(diary.getImageId())
+                .date(diary.getDateOfDay())
+                .build();
     }
 }
