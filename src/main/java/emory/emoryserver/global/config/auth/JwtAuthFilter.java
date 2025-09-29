@@ -26,6 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/",
             "/ping",
             "/api/auth/**",
+            "/ai/chat/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-resources/**",
