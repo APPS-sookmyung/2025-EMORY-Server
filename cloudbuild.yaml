@@ -42,6 +42,8 @@ steps:
       '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
       '--region','$_REGION',
       '--platform','managed',
-      '--no-traffic',
-      '--port','8080'
+      '--port','8080',
+      '--allow-unauthenticated',
+      '--traffic','latest'   # ← 자동 전환
     ]
+
