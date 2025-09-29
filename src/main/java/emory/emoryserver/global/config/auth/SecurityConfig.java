@@ -8,6 +8,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
@@ -27,6 +28,25 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    /**
+     * ★ 완전 제외(ignore): 이 경로들은 Spring Security 필터를 아예 타지 않음.
+     *   (디버그/안정화용으로 강력. 이후 필요 시 permitAll로 단계적 전환 가능)
+     */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers(
+                "/ping",
+                "/ai/chat/**",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/swagger-resources/**",
+                "/webjars/**",
+                "/favicon.ico",
+                "/actuator/health",
+                "/actuator/info"
+        );
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,21 +55,13 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 공개 엔드포인트
-                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**","/error").permitAll()
-                        .requestMatchers("/actuator/health","/actuator/info").permitAll()
-                        .requestMatchers("/ping").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/ai/chat/start").permitAll()
-                        .requestMatchers("/ai/chat/**").permitAll()
-
-                        // 나머지는 인증 필요
+                        // 위의 ignoring()으로 제외된 것 외 나머지는 정책 적용
                         .anyRequest().authenticated()
                 )
                 .anonymous(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedJson()));
 
-        // ★ JWT 필터 등록 (스프링 기본 인증 필터 앞)
+        // JWT 필터 등록(인증 필요 경로만 대상이 됨; ignore된 경로에는 적용 안 됨)
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
