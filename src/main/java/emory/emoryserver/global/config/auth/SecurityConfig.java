@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+// ⛔ import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;  // 삭제
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,13 +30,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 프리플라이트
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Actuator 전부 허용(health, liveness, readiness 포함)
-                        .requestMatchers(EndpointRequest.toAnyEndpoint()).permitAll()
+                        // ✅ EndpointRequest 대신 패턴
+                        .requestMatchers("/actuator/**").permitAll()
 
-                        // 공개 엔드포인트(루트/스웨거/인증 API 등)
                         .requestMatchers(
                                 "/",
                                 "/error",
@@ -46,11 +44,8 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/api/auth/**"
                         ).permitAll()
-
-                        // 나머지 보호
                         .anyRequest().authenticated()
                 )
-                // JWT 필터(권한 필요한 요청에서만 동작해야 함)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

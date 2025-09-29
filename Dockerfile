@@ -1,22 +1,56 @@
-# Java 21 런타임 (클래스 버전 65)
-FROM eclipse-temurin:21-jre-alpine
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
 
-# 타임존 설정
-ENV TZ=Asia/Seoul
-RUN apk add --no-cache tzdata && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+group = 'emory'
+version = '0.0.1-SNAPSHOT'
 
-# 앱 디렉터리
-WORKDIR /app
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
 
-# 빌드 산출물 복사 (bootJar 결과물)
-COPY build/libs/*.jar app.jar
+tasks.withType(JavaCompile).configureEach {
+	options.release = 21
+}
 
-# Cloud Run은 8080을 사용 (문서화 목적)
-EXPOSE 8080
+repositories {
+	mavenCentral()
+}
 
-# 추가 JVM 옵션을 외부에서 주입할 수 있도록
-ENV JAVA_OPTS=""
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 
-# $PORT 주입 + PID 1 신호 처리 위해 exec 사용
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	// Swagger (SpringDoc)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.named('bootJar') {
+	archiveFileName = "app.jar"
+}
+
+tasks.named('jar') {
+	enabled = false
+}

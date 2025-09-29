@@ -1,49 +1,39 @@
-substitutions:
-  _REGION: "asia-northeast3"
-  _REPO: "emory-repo"
-  _SERVICE: "emory-server"
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-
 steps:
-  # 1) Gradle 빌드 - JDK21 포함 이미지
-  - name: 'gradle:8.14.2-jdk21'
+  # 0) 디버그: 무엇이 체크아웃되었는지 확인
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Debug list files'
     entrypoint: bash
     args:
       - -lc
       - |
-        set -eu
-        chmod +x ./gradlew || true
-        if command -v sed >/dev/null 2>&1; then sed -i 's/\r$//' ./gradlew || true; fi
-        ./gradlew --version
+        pwd
+        ls -la
+        echo "---- find gradlew ----"
+        find . -maxdepth 3 -name gradlew -ls || true
+
+  # 1) CRLF -> LF, 실행권한 부여
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Fix line endings & chmod'
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        if [ -f ./gradlew ]; then
+          # 줄바꿈 정리(있으면 적용, 없어도 통과)
+          sed -i 's/\r$//' ./gradlew || true
+          chmod +x ./gradlew
+        else
+          echo "gradlew not found in $(pwd)"
+          exit 1
+        fi
+
+  # 2) Gradle Wrapper로 빌드
+  - name: 'gcr.io/cloud-builders/gradle'
+    id: 'Gradle Build'
+    entrypoint: bash
+    args:
+      - -lc
+      - |
         ./gradlew clean build -x test
 
-  # 2) Docker 빌드
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build','-t',
-      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
-      '.'
-    ]
-
-  # 3) Push
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'push',
-      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
-    ]
-
-  # 4) Cloud Run 배포 (트래픽은 보류)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args: [
-      'run','deploy','$_SERVICE',
-      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
-      '--region','$_REGION',
-      '--platform','managed',
-      '--port','8080',
-      '--allow-unauthenticated',
-      '--traffic','latest'   # ← 자동 전환
-    ]
-
+  # (후속: 도커 빌드/푸시/배포 단계들...)
