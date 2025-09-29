@@ -5,11 +5,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -19,8 +21,11 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(jsr250Enabled = true) // @PermitAll 사용 가능
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,20 +37,20 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 공개 엔드포인트
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/ping").permitAll()                              // ★ 추가
+                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**","/error").permitAll()
+                        .requestMatchers("/actuator/health","/actuator/info").permitAll()
+                        .requestMatchers("/ping").permitAll()
                         .requestMatchers(HttpMethod.POST, "/ai/chat/start").permitAll()
                         .requestMatchers("/ai/chat/**").permitAll()
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
-                .anonymous(Customizer.withDefaults()) // ★ 익명 허용
+                .anonymous(Customizer.withDefaults())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedJson()));
 
-                // 인증 안 된 접근은 401로(지금까지 403이던 걸 식별 가능하게)
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(unauthorizedJson()));
+        // ★ JWT 필터 등록 (스프링 기본 인증 필터 앞)
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -54,7 +59,7 @@ public class SecurityConfig {
         return (req, res, e) -> {
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.setContentType("application/json");
-            res.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\"" + e.getMessage() + "\"}");
+            res.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\"" + (e != null ? e.getMessage() : "") + "\"}");
         };
     }
 
@@ -66,9 +71,9 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:5173"
         ));
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
-        cfg.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        cfg.setExposedHeaders(List.of("Authorization","Content-Type"));
         cfg.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
