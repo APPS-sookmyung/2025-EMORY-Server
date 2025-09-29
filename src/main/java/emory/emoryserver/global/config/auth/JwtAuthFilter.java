@@ -22,11 +22,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private static final AntPathMatcher matcher = new AntPathMatcher();
 
-    // 🔓 공개 경로 (context-path 유무와 무관하게 매칭되도록 구성)
     private static final List<String> WHITELIST = List.of(
             "/",
-            "/ping",               // ★ 추가
-            "/ai/chat/**",         // ★ 추가
+            "/ping",
+            "/ai/chat/**",
             "/api/auth/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
@@ -39,7 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // ★ getServletPath() 사용: /api 같은 context-path가 있어도 정상 매칭
+        // ★ context-path 유무와 상관없는 servletPath로 매칭
         String path = request.getServletPath();
         return WHITELIST.stream().anyMatch(p -> matcher.match(p, path));
     }
@@ -66,9 +65,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
-        } catch (Exception ignored) {
-            // 토큰 문제는 그냥 인증 미적용으로 두고 다음 필터로 넘김
-        }
+        } catch (Exception ignored) { }
 
         chain.doFilter(req, res);
     }

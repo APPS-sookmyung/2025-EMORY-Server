@@ -29,8 +29,8 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     /**
-     * ★ 완전 제외(ignore): 이 경로들은 Spring Security 필터를 아예 타지 않음.
-     *   (디버그/안정화용으로 강력. 이후 필요 시 permitAll로 단계적 전환 가능)
+     * (선택) 완전 제외: 여기에 있는 경로는 Spring Security 필터 자체를 타지 않음.
+     *  안정화가 끝나면 이 bean을 제거하고, 아래 requestMatchers만으로 운영해도 됩니다.
      */
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -55,13 +55,27 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // 위의 ignoring()으로 제외된 것 외 나머지는 정책 적용
+
+                        // 공개 엔드포인트
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/error",
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/ping",
+                                "/ai/chat/**"
+                        ).permitAll()
+
+                        // 그 외는 인증 필요
                         .anyRequest().authenticated()
                 )
                 .anonymous(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedJson()));
 
-        // JWT 필터 등록(인증 필요 경로만 대상이 됨; ignore된 경로에는 적용 안 됨)
+        // JWT 필터 등록
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -71,7 +85,8 @@ public class SecurityConfig {
         return (req, res, e) -> {
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.setContentType("application/json");
-            res.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\"" + (e != null ? e.getMessage() : "") + "\"}");
+            res.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\""
+                    + (e != null ? e.getMessage() : "") + "\"}");
         };
     }
 
