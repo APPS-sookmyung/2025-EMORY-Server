@@ -7,7 +7,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1) Gradle 빌드 (하드닝: perl 제거, POSIX 도구만 사용, 도구 없으면 안전 스킵)
+  # 1) Gradle 빌드
   - name: 'gcr.io/cloud-builders/gradle'
     entrypoint: sh
     args:
@@ -15,21 +15,7 @@ steps:
       - |
         set -eu
         chmod +x gradlew
-
-        # CRLF -> LF (sed가 있으면 실행, 실패해도 빌드 계속)
-        if command -v sed >/dev/null 2>&1; then
-          sed -i 's/\r$//' gradlew || true
-        fi
-
-        # UTF-8 BOM 제거 (od/tail 없으면 정중히 스킵)
-        if command -v od >/dev/null 2>&1 && command -v tail >/dev/null 2>&1; then
-          if [ "$(head -c 3 gradlew | od -An -t x1 | tr -d ' ')" = "efbbbf" ]; then
-            tail -c +4 gradlew > gradlew.nobom && mv gradlew.nobom gradlew
-          fi
-        else
-          echo "Skip BOM strip (od/tail not available)"
-        fi
-
+        if command -v sed >/dev/null 2>&1; then sed -i 's/\r$//' gradlew || true; fi
         sh ./gradlew clean build -x test
     id: 'Gradle Build'
 
@@ -65,6 +51,3 @@ steps:
         '--port','8080'
       ]
     id: 'Deploy to Cloud Run'
-
-images:
-  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
