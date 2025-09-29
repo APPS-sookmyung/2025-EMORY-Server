@@ -7,41 +7,43 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1) Gradle 빌드
-  - name: 'gcr.io/cloud-builders/gradle'
-    dir: '2025-EMORY-Server'
-    entrypoint: 'bash'
-    args: ['-c', './gradlew clean build -x test']
-    id: 'Gradle Build'
-
-  # 2) Docker 이미지 빌드
-  - name: 'gcr.io/cloud-builders/docker'
+  # 1) Gradle 빌드 - JDK21 포함 이미지
+  - name: 'gradle:8.14.2-jdk21'
+    entrypoint: bash
     args:
-      [
-        'build', '-t',
-        'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
-        '.'
-      ]
-    id: 'Docker Build'
+      - -lc
+      - |
+        set -eu
+        chmod +x ./gradlew || true
+        if command -v sed >/dev/null 2>&1; then sed -i 's/\r$//' ./gradlew || true; fi
+        ./gradlew --version
+        ./gradlew clean build -x test
 
-  # 3) Artifact
+  # 2) Docker 빌드
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
-    id: 'Push Image'
+    args: [
+      'build','-t',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
+      '.'
+    ]
 
-  # 4) Cloud Run 배포 (무트래픽, 검증용)
+  # 3) Push
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
+    ]
+
+  # 4) Cloud Run 배포 (트래픽은 보류)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
-    args:
-      [
-        'run','deploy','${_SERVICE}',
-        '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
-        '--region','${_REGION}',
-        '--platform','managed',
-        '--no-traffic',
-        '--port','8080'
-      ]
-    id: 'Deploy to Cloud Run'
+    args: [
+      'run','deploy','$_SERVICE',
+      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
+      '--region','$_REGION',
+      '--platform','managed',
+      '--port','8080',
+      '--allow-unauthenticated',
+      '--traffic','latest'   # ← 자동 전환
+    ]
 
-images:
-  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
