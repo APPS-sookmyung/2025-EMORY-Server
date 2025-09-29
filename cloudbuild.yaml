@@ -1,5 +1,13 @@
+substitutions:
+  _REGION: "asia-northeast3"
+  _REPO: "emory-repo"
+  _SERVICE: "emory-server"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
-  # 1) Gradle 빌드 - JDK21 포함 이미지 사용(중요)
+  # 1) Gradle 빌드 - JDK21 포함 이미지
   - name: 'gradle:8.14.2-jdk21'
     entrypoint: bash
     args:
@@ -7,40 +15,33 @@ steps:
       - |
         set -eu
         chmod +x ./gradlew || true
-        # CRLF 방지
         if command -v sed >/dev/null 2>&1; then sed -i 's/\r$//' ./gradlew || true; fi
         ./gradlew --version
         ./gradlew clean build -x test
 
   # 2) Docker 빌드
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'build','-t',
-        'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
-        '.'
-      ]
+    args: [
+      'build','-t',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$SHORT_SHA',
+      '.'
+    ]
 
   # 3) Push
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'push',
-        'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
-      ]
+    args: [
+      'push',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$SHORT_SHA'
+    ]
 
-  # 4) Cloud Run 배포
+  # 4) Cloud Run 배포 (트래픽은 보류)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
-    args:
-      [
-        'run','deploy','${_SERVICE}',
-        '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
-        '--region','${_REGION}',
-        '--platform','managed',
-        '--no-traffic',
-        '--port','8080'
-      ]
-
-options:
-  logging: CLOUD_LOGGING_ONLY
+    args: [
+      'run','deploy','$_SERVICE',
+      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$SHORT_SHA',
+      '--region','$_REGION',
+      '--platform','managed',
+      '--no-traffic',
+      '--port','8080'
+    ]
