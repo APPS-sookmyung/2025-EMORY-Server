@@ -23,7 +23,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build','-t',
-      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$SHORT_SHA',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
       '.'
     ]
 
@@ -31,7 +31,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'push',
-      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$SHORT_SHA'
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
     ]
 
   # 4) Cloud Run 배포 (트래픽은 보류)
@@ -39,7 +39,7 @@ steps:
     entrypoint: gcloud
     args: [
       'run','deploy','$_SERVICE',
-      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$SHORT_SHA',
+      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
       '--region','$_REGION',
       '--platform','managed',
       '--no-traffic',
