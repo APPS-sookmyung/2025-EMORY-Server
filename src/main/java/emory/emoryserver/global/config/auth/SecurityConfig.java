@@ -28,26 +28,16 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-    /**
-     * Spring Security 6 스타일.
-     * Swagger / docs / ping / actuator 등은 항상 공개.
-     * 그 외는 인증 필요.
-     * 403 이슈 방지를 위해 CORS, 예외 핸들러 정리.
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // REST API 기본 세팅
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // 권한
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight 전면 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 공개 엔드포인트
+                        // 공개 엔드포인트 (Swagger/Docs/Actuator/헬스체크)
                         .requestMatchers(
                                 "/",
                                 "/error",
@@ -62,22 +52,16 @@ public class SecurityConfig {
                                 "/ai/chat/**"
                         ).permitAll()
 
-                        // 나머지는 인증 필요
+                        // 그 외는 인증 필요
                         .anyRequest().authenticated()
                 )
-
-                // 예외 응답(JSON)
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(unauthorizedJson()) // 401
-                        .accessDeniedHandler(accessDeniedJson())      // 403
+                        .authenticationEntryPoint(unauthorizedJson())
+                        .accessDeniedHandler(accessDeniedJson())
                 )
-
-                // 익명 허용
                 .anonymous(Customizer.withDefaults());
 
-        // JWT 필터 (UsernamePasswordAuthenticationFilter 앞)
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
@@ -99,17 +83,9 @@ public class SecurityConfig {
         };
     }
 
-    /**
-     * CORS
-     * - Swagger UI(동일 도메인)에는 영향이 거의 없지만,
-     *   프론트(로컬/다른 도메인)에서 호출할 때를 대비해 설정.
-     * - 필요 시 allowedOriginPatterns로 운영 도메인 추가.
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-
-        // 운영/개발 도메인들(패턴 허용; Cloud Run 도메인/커스텀 도메인/로컬)
         cfg.setAllowedOriginPatterns(List.of(
                 "https://*.run.app",
                 "https://*.a.run.app",
@@ -117,12 +93,10 @@ public class SecurityConfig {
                 "http://localhost:*",
                 "http://127.0.0.1:*"
         ));
-        // 자격증명 필요 없으면 false 권장(와일드카드 패턴과 충돌 방지)
         cfg.setAllowCredentials(false);
-
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
-        cfg.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        cfg.setExposedHeaders(List.of("Authorization","Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
