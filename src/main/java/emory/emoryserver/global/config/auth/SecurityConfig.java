@@ -35,26 +35,20 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 공개 엔드포인트 (Swagger/Docs/Actuator/헬스체크/핑/AI)
+                        // 공개 엔드포인트
                         .requestMatchers(
-                                "/",
-                                "/error",
-                                "/ping",
-                                "/actuator/health",
-                                "/actuator/health/**",
-                                "/actuator/info",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/webjars/**",
-                                "/favicon.ico",
+                                "/", "/error", "/ping",
+                                "/actuator/health", "/actuator/health/**", "/actuator/info",
+                                "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**",
+                                "/webjars/**", "/favicon.ico",
                                 "/ai/chat/**"
                         ).permitAll()
 
-                        // 그 외는 인증 필요
+                        // 로그인/인증 진입점은 반드시 허용
+                        .requestMatchers("/api/auth/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
@@ -63,9 +57,7 @@ public class SecurityConfig {
                 )
                 .anonymous(Customizer.withDefaults());
 
-        // JWT 필터 등록 (UsernamePasswordAuthenticationFilter 이전)
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
