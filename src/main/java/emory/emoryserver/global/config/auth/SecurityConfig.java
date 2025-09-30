@@ -39,7 +39,7 @@ public class SecurityConfig {
 
                         // 공개 엔드포인트
                         .requestMatchers(
-                                "/", "/error", "/ping",
+                                "/", "/error", "/ping", "api/ping",
                                 "/actuator/health", "/actuator/health/**", "/actuator/info",
                                 "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**",
                                 "/webjars/**", "/favicon.ico",
