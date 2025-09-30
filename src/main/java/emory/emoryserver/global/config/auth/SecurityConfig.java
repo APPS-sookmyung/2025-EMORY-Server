@@ -10,9 +10,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -22,77 +20,77 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true, jsr250Enabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    // Swagger & 공개 경로 화이트리스트
+    private static final String[] PUBLIC = {
+            "/", "/ping",
+            "/api/auth/**",                // <- 실제 AuthController 경로와 일치
+            "/actuator/health", "/actuator/info",
+
+            // springdoc-openapi / swagger
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/swagger-resources/**",
+            "/webjars/**",
+            "/favicon.ico"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // CSRF/CORS
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 세션 완전 비활성(쿠키 생성 방지)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 기본 로그인/HTTP Basic 끄기(예상치 못한 403/리다이렉트 방지)
+                .formLogin(fl -> fl.disable())
+                .httpBasic(hb -> hb.disable())
+
+                // 예외 전략: 무토큰 접근은 401, 권한없음은 403
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN))
+                )
+
+                // 권한 규칙
                 .authorizeHttpRequests(auth -> auth
+                        // 프리플라이트 전면 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 공개 엔드포인트
-                        .requestMatchers(
-                                "/", "/error", "/ping", "api/ping",
-                                "/actuator/health", "/actuator/health/**", "/actuator/info",
-                                "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**",
-                                "/webjars/**", "/favicon.ico",
-                                "/ai/chat/**"
-                        ).permitAll()
+                        // 공개 경로 허용 (anyRequest보다 반드시 먼저)
+                        .requestMatchers(PUBLIC).permitAll()
 
-                        // 로그인/인증 진입점은 반드시 허용
-                        .requestMatchers("/api/auth/**").permitAll()
-
+                        // 그 외 보호
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(unauthorizedJson())
-                        .accessDeniedHandler(accessDeniedJson())
-                )
-                .anonymous(Customizer.withDefaults());
 
-        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // JWT 필터 연결: UsernamePasswordAuthenticationFilter 앞
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
-    private AuthenticationEntryPoint unauthorizedJson() {
-        return (req, res, e) -> {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            res.setContentType("application/json;charset=UTF-8");
-            String msg = (e != null && e.getMessage() != null) ? e.getMessage() : "Unauthorized";
-            res.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\"" + msg + "\"}");
-        };
-    }
-
-    private AccessDeniedHandler accessDeniedJson() {
-        return (req, res, e) -> {
-            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            res.setContentType("application/json;charset=UTF-8");
-            String msg = (e != null && e.getMessage() != null) ? e.getMessage() : "Forbidden";
-            res.getWriter().write("{\"error\":\"FORBIDDEN\",\"message\":\"" + msg + "\"}");
-        };
-    }
-
+    // CORS (필요시 origin을 구체 도메인으로 제한)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOriginPatterns(List.of(
-                "https://*.run.app",
-                "https://*.a.run.app",
-                "https://*.cloud.run",
-                "http://localhost:*",
-                "http://127.0.0.1:*"
+                "*"
         ));
-        cfg.setAllowCredentials(false);
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        cfg.setAllowCredentials(false); // 쿠키 안 쓰면 false 권장
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setExposedHeaders(List.of("Authorization","Content-Type"));
+        cfg.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
