@@ -35,14 +35,16 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 공개 엔드포인트 (Swagger/Docs/Actuator/헬스체크)
+                        // 공개 엔드포인트 (Swagger/Docs/Actuator/헬스체크/핑/AI)
                         .requestMatchers(
                                 "/",
                                 "/error",
                                 "/ping",
                                 "/actuator/health",
+                                "/actuator/health/**",
                                 "/actuator/info",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -61,7 +63,9 @@ public class SecurityConfig {
                 )
                 .anonymous(Customizer.withDefaults());
 
+        // JWT 필터 등록 (UsernamePasswordAuthenticationFilter 이전)
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 

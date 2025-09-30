@@ -41,13 +41,17 @@ steps:
 
   # 2) Gradle 빌드 (Wrapper 사용, 테스트 제외)
   - name: 'gradle:8.14.2-jdk21'
-    id: 'Gradle Build'
     entrypoint: bash
     args:
       - -lc
       - |
+        set -eu
+        chmod +x ./gradlew || true
+        # CRLF → LF (윈도우 푸시 대비)
+        if command -v sed >/dev/null 2>&1; then sed -i 's/\r$//' ./gradlew || true; fi
         ./gradlew --version
-        ./gradlew clean build -x test --no-daemon
+        java -version || true
+        ./gradlew clean build -x test --no-daemon --stacktrace --info
 
   # 3) Docker 빌드
   - name: 'gcr.io/cloud-builders/docker'
