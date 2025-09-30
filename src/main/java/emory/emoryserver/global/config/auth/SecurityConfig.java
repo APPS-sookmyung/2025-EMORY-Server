@@ -33,6 +33,7 @@ public class SecurityConfig {
             "/actuator/health", "/actuator/info",
 
             // springdoc-openapi / swagger
+            "/error",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
