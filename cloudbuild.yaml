@@ -1,5 +1,19 @@
+substitutions:
+  _REGION: "asia-northeast3"
+  _REPO: "emory-repo"
+  _SERVICE: "emory-server"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# 캐시로 빌드 속도 안정화
+cache:
+  paths:
+    - '/root/.gradle/wrapper'
+    - '/root/.gradle/caches'
+
 steps:
-  # 0) 디버그: 무엇이 체크아웃되었는지 확인
+  # 0) 디버그: 체크아웃된 내용 확인
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'Debug list files'
     entrypoint: bash
@@ -11,7 +25,7 @@ steps:
         echo "---- find gradlew ----"
         find . -maxdepth 3 -name gradlew -ls || true
 
-  # 1) CRLF -> LF, 실행권한 부여
+  # 1) gradlew 권한 & CRLF->LF 정리
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'Fix line endings & chmod'
     entrypoint: bash
@@ -19,21 +33,53 @@ steps:
       - -lc
       - |
         if [ -f ./gradlew ]; then
-          # 줄바꿈 정리(있으면 적용, 없어도 통과)
           sed -i 's/\r$//' ./gradlew || true
           chmod +x ./gradlew
         else
-          echo "gradlew not found in $(pwd)"
-          exit 1
+          echo "gradlew not found in $(pwd)"; exit 1
         fi
 
-  # 2) Gradle Wrapper로 빌드
-  - name: 'gcr.io/cloud-builders/gradle'
+  # 2) Gradle 빌드 (Wrapper 사용, 테스트 제외)
+  - name: 'gradle:8.14.2-jdk21'
     id: 'Gradle Build'
     entrypoint: bash
     args:
       - -lc
       - |
-        ./gradlew clean build -x test
+        ./gradlew --version
+        ./gradlew clean build -x test --no-daemon
 
-  # (후속: 도커 빌드/푸시/배포 단계들...)
+  # 3) Docker 빌드
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker Build'
+    args: [
+      'build','-t',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
+      '.'
+    ]
+
+  # 4) Docker Push
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker Push'
+    args: [
+      'push',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
+    ]
+
+  # 5) Cloud Run 배포
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Cloud Run Deploy'
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        gcloud run deploy $_SERVICE \
+          --image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA \
+          --region=$_REGION \
+          --platform=managed \
+          --allow-unauthenticated \
+          --cpu=1 --memory=512Mi \
+          --set-env-vars=SPRING_PROFILES_ACTIVE=prod
+
+images:
+  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
