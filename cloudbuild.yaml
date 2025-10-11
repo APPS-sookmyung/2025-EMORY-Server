@@ -78,7 +78,7 @@ steps:
       '--memory', '512Mi',
       '--cpu-boost',
       '--no-traffic',
-      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod'
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod',
       '--set-revision-health-check-path=/actuator/health',
       '--set-revision-health-check-timeout=10s'
     ]
