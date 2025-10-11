@@ -77,8 +77,17 @@ steps:
       '--cpu', '1',
       '--memory', '512Mi',
       '--cpu-boost',
-      '--traffic=latest=100',
+      '--no-traffic',
       '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod'
+    ]
+  # 6) 트래픽 전환 (LATEST로 100% 할당)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:474.0.0'
+    id: 'Traffic Switch'
+    entrypoint: gcloud
+    args: [
+      'run', 'services', 'update-traffic', '$_SERVICE',
+      '--to-latest',
+      '--region', '$_REGION', '--platform', 'managed'
     ]
 
 images:
