@@ -6,12 +6,6 @@ substitutions:
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# 캐시로 빌드 속도 안정화
-cache:
-  paths:
-    - '/root/.gradle/wrapper'
-    - '/root/.gradle/caches'
-
 steps:
   # 0) 디버그: 체크아웃된 내용 확인
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
