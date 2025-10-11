@@ -78,7 +78,7 @@ steps:
           --allow-unauthenticated \
           --cpu=1 --memory=512Mi \
           --cpu-boost \
-          --traffic='latest=100' \
+          --to-latest \
           --set-env-vars=SPRING_PROFILES_ACTIVE=prod
 
 images:
