@@ -67,19 +67,19 @@ steps:
   # 5) Cloud Run 배포
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'Cloud Run Deploy'
-    entrypoint: bash
-    args:
-      - -lc
-      - |
-        gcloud run deploy $_SERVICE \
-          --image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA \
-          --region=$_REGION \
-          --platform=managed \
-          --allow-unauthenticated \
-          --cpu=1 --memory=512Mi \
-          --cpu-boost \
-          --traffic=LATEST=100 \
-          --set-env-vars=SPRING_PROFILES_ACTIVE=prod
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy', '$_SERVICE',
+      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
+      '--region', '$_REGION',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--cpu', '1',
+      '--memory', '512Mi',
+      '--cpu-boost',
+      '--traffic', 'latest',
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod'
+    ]
 
 images:
   - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
