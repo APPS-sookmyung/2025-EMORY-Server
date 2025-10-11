@@ -1,14 +1,18 @@
 package emory.emoryserver.web;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class HomeController {
 
     @GetMapping("/")
     public String index() {
-        // 루트로 오면 스웨거로 보냄
-        return "redirect:/swagger-ui/index.html";
+        return "redirect:/swagger-ui.html";
+    }
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
     }
 }
