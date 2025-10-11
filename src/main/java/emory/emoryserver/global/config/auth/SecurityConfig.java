@@ -35,8 +35,6 @@ public class SecurityConfig {
             // springdoc-openapi / swagger
             "/error",
             "/v3/api-docs/**",
-//            "/swagger-ui/**",
-//            "/swagger-ui.html",
             "/swagger-resources/**",
             "/webjars/**",
             "/favicon.ico"
