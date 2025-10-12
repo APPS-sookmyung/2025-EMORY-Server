@@ -65,7 +65,7 @@ steps:
     ]
 
   # 5) Cloud Run 배포
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:474.0.0'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'Cloud Run Deploy'
     entrypoint: gcloud
     args: [
@@ -81,7 +81,7 @@ steps:
       '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=mongodb+srv://<emory_user>:<Wjddms416>@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory'
     ]
   # 6) 트래픽 전환 (LATEST로 100% 할당)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'Traffic Switch'
     entrypoint: gcloud
     args: [
