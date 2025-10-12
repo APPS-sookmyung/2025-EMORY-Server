@@ -86,7 +86,7 @@ steps:
     entrypoint: gcloud
     args: [
       'run', 'services', 'update-traffic', '$_SERVICE',
-      'LATEST=100',
+      '--to-latest',
       '--region', '$_REGION', '--platform', 'managed'
     ]
 
