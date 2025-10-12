@@ -9,7 +9,7 @@ import emory.emoryserver.aidiary.exception.DiaryNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Service
+// @Service
 @RequiredArgsConstructor
 public class AiDiaryService {
 
