@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @Tag(name = "Diary Edit", description = "일기 작성 및 수정 API")
-@RestController
+// @RestController
 @RequestMapping("/aidiary/diary")
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 public class DiaryEditController {
 
     private final AiDiaryService aiDiaryService;

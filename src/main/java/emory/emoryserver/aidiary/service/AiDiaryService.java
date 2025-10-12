@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@Service
+// @Service
 @RequiredArgsConstructor
 public class AiDiaryService {
     // private final ChatLogRepository ... // 세션/로그 조회 필요 시 주입
