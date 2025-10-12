@@ -78,7 +78,7 @@ steps:
       '--memory', '512Mi',
       '--cpu-boost',
       '--no-traffic',
-      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod'
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=mongodb+srv://<emory_user>:<Wjddms416>@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory'
     ]
   # 6) 트래픽 전환 (LATEST로 100% 할당)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
