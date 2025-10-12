@@ -81,7 +81,7 @@ steps:
       '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod'
     ]
   # 6) 트래픽 전환 (LATEST로 100% 할당)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
     id: 'Traffic Switch'
     entrypoint: gcloud
     args: [
