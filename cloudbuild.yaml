@@ -75,6 +75,7 @@ steps:
       '--platform', 'managed',
       '--allow-unauthenticated',
       '--cpu', '1',
+      '--timeout', '300',
       '--memory', '512Mi',
       '--cpu-boost',
       '--no-traffic',
