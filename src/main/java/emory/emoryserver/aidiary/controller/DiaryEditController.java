@@ -6,6 +6,7 @@ import emory.emoryserver.aidiary.model.AiDiary;
 import emory.emoryserver.aidiary.repository.AiDiaryRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +14,8 @@ import java.time.LocalDateTime;
 
 @Tag(name = "Diary Edit", description = "일기 작성 및 수정 API")
 // @RestController
-@RequestMapping("/diary")
+@RequestMapping("/aidiary/diary")
+
 public class DiaryEditController {
     private final AiDiaryRepository aiDiaryRepository;
 
