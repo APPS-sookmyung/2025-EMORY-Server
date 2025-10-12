@@ -78,11 +78,7 @@ steps:
       '--memory', '512Mi',
       '--cpu-boost',
       '--no-traffic',
-      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod',
-      '--set-revision-health-check-path=/actuator/health',
-      '--set-containers-readiness-probe=/actuator/health',
-      '--set-containers-startup-probe=/actuator/health',
-      '--set-revision-health-check-timeout=10s'
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod'
     ]
   # 6) 트래픽 전환 (LATEST로 100% 할당)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
