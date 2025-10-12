@@ -4,7 +4,7 @@ package emory.emoryserver.ai.controller;
 import emory.emoryserver.ai.dto.chat.ChatMessageRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatSaveRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatStartRequestDto;
-import emory.emoryserver.ai.dto.chat.DiaryGenerateRequestDto;
+import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
@@ -45,10 +45,10 @@ public class ChatController {
         // 저장할 대화 내용 처리
     }
 
-    @Operation(summary = "AI 일기 생성", description = "저장된 대화 내용 기반으로 AI가 일기를 생성합니다.")
+    @Operation(summary = "AI 일기 생성", description = "vNext: POST /aidiary/diary/generate 사용")
     @PostMapping("/generate-diary")
+    @Deprecated
     public void generateDiary(@RequestBody DiaryGenerateRequestDto request) {
-        // AI 일기 생성 로직
-        // 세션 id로 대화내용 찾아서 일기 생성
+        // AiDiaryService로 위임
     }
 }
