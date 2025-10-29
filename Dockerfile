@@ -5,8 +5,10 @@ RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 WORKDIR /app
-COPY build/libs/app.jar app.jar
+COPY build/libs/*.jar app.jar
 
-# Cloud Run이 주입하는 PORT 사용. 기본 8080
-ENV JAVA_OPTS=""
-CMD ["sh","-c","java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
+# Cloud Run 환경변수 PORT를 Spring Boot가 직접 읽게 하기
+ENV PORT=8080
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
