@@ -6,9 +6,6 @@ import emory.emoryserver.aidiary.repository.AiDiaryRepository;
 import emory.emoryserver.diary.dto.DiaryImage;
 import emory.emoryserver.diary.dto.DiaryResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,60 +18,44 @@ import java.util.stream.Collectors;
 public class DiaryService {
 
     private final AiDiaryRepository aiDiaryRepository;
-    private final MongoTemplate mongoTemplate;
 
     /**
-     * 전체 일기 목록 조회 (최신순)
-     * FINAL 상태의 일기만 조회
+     * 전체 일기 목록 조회 (FINAL 상태만, 최신순)
      */
     public List<DiaryResponse> getAllDiaries(String userId) {
-        // FINAL 상태의 일기만 조회하는 쿼리
-        Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userId));
-        query.addCriteria(Criteria.where("status").is("FINAL"));
-        query.with(org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Direction.DESC, "dateOfDay"));
-
-        List<AiDiary> diaries = mongoTemplate.find(query, AiDiary.class);
+        List<AiDiary> diaries = aiDiaryRepository.findByUserIdAndStatusOrderByDateOfDayDesc(userId, "FINAL");
         return diaries.stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
 
     /**
-     * 이미지가 있는 일기 목록 조회 (최신순)
-     * FINAL 상태 + 이미지가 있는 일기만
+     * 이미지가 있는 일기 목록 조회 (FINAL 상태만, 최신순)
      */
     public List<DiaryImage> getDiaryImages(String userId, Integer year) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userId));
-        query.addCriteria(Criteria.where("status").is("FINAL"));
-        query.addCriteria(Criteria.where("imageId").ne(null).ne(""));
+        List<AiDiary> diaries;
 
         if (year != null) {
             LocalDate startDate = LocalDate.of(year, 1, 1);
             LocalDate endDate = LocalDate.of(year + 1, 1, 1);
-            query.addCriteria(Criteria.where("dateOfDay").gte(startDate).lt(endDate));
+            diaries = aiDiaryRepository.findByUserIdAndStatusAndImageIdIsNotNullAndDateOfDayBetweenOrderByDateOfDayDesc(
+                    userId, "FINAL", startDate, endDate);
+        } else {
+            diaries = aiDiaryRepository.findByUserIdAndStatusAndImageIdIsNotNullOrderByDateOfDayDesc(userId, "FINAL");
         }
 
-        query.with(org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Direction.DESC, "dateOfDay"));
-
-        List<AiDiary> diaries = mongoTemplate.find(query, AiDiary.class);
         return diaries.stream()
                 .map(this::toImageDto)
                 .collect(Collectors.toList());
     }
 
     /**
-     * 일기 삭제
-     * FINAL 상태의 일기만 삭제 가능
+     * 일기 삭제 (FINAL 상태만 삭제 가능)
      */
     public void deleteDiary(String diaryId, String userId) {
         AiDiary diary = aiDiaryRepository.findByIdAndUserId(diaryId, userId)
                 .orElseThrow(() -> new DiaryNotFoundException(diaryId));
 
-        // FINAL 상태가 아니면 삭제 불가 (안전장치)
         if (!"FINAL".equals(diary.getStatus())) {
             throw new IllegalStateException("최종 저장되지 않은 일기는 삭제할 수 없습니다.");
         }
@@ -82,9 +63,9 @@ public class DiaryService {
         aiDiaryRepository.delete(diary);
     }
 
+
     /**
      * 스크랩 토글
-     * scraped 필드를 true ↔ false 전환
      */
     public DiaryResponse toggleScrap(String diaryId, String userId) {
         AiDiary diary = aiDiaryRepository.findByIdAndUserId(diaryId, userId)
