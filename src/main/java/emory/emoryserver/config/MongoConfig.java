@@ -1,4 +1,3 @@
-/*
 package emory.emoryserver.config;
 
 import org.springframework.context.annotation.Configuration;
@@ -13,4 +12,4 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
     protected String getDatabaseName() {
         return "emory";
     }
-}*/
+}

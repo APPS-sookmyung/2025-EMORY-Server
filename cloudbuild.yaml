@@ -7,41 +7,89 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1) Gradle 빌드
-  - name: 'gcr.io/cloud-builders/gradle'
-    dir: '2025-EMORY-Server'
-    entrypoint: 'bash'
-    args: ['-c', './gradlew clean build -x test']
-    id: 'Gradle Build'
-
-  # 2) Docker 이미지 빌드
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'build', '-t',
-        'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
-        '.'
-      ]
-    id: 'Docker Build'
-
-  # 3) Artifact
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA']
-    id: 'Push Image'
-
-  # 4) Cloud Run 배포 (무트래픽, 검증용)
+  # 0) 디버그: 체크아웃된 내용 확인
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    id: 'Debug list files'
+    entrypoint: bash
     args:
-      [
-        'run','deploy','${_SERVICE}',
-        '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA',
-        '--region','${_REGION}',
-        '--platform','managed',
-        '--no-traffic',
-        '--port','8080'
-      ]
-    id: 'Deploy to Cloud Run'
+      - -lc
+      - |
+        pwd
+        ls -la
+        echo "---- find gradlew ----"
+        find . -maxdepth 3 -name gradlew -ls || true
+
+  # 1) gradlew 권한 & CRLF->LF 정리
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Fix line endings & chmod'
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        if [ -f ./gradlew ]; then
+          sed -i 's/\r$//' ./gradlew || true
+          chmod +x ./gradlew
+        else
+          echo "gradlew not found in $(pwd)"; exit 1
+        fi
+
+  # 2) Gradle 빌드 (Wrapper 사용, 테스트 제외)
+  - name: 'gradle:8.14.2-jdk21'
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        set -eu
+        chmod +x ./gradlew || true
+        # CRLF → LF (윈도우 푸시 대비)
+        if command -v sed >/dev/null 2>&1; then sed -i 's/\r$//' ./gradlew || true; fi
+        ./gradlew --version
+        java -version || true
+        ./gradlew clean build -x test --no-daemon --stacktrace --info
+
+  # 3) Docker 빌드
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker Build'
+    args: [
+      'build','-t',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
+      '.'
+    ]
+
+  # 4) Docker Push
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker Push'
+    args: [
+      'push',
+      'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'
+    ]
+
+  # 5) Cloud Run 배포
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Cloud Run Deploy'
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy', '$_SERVICE',
+      '--image=asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA',
+      '--region', '$_REGION',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--cpu', '1',
+      '--timeout', '300',
+      '--memory', '512Mi',
+      '--cpu-boost',
+      '--no-traffic',
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=mongodb+srv://<emory_user>:<Wjddms416>@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory'
+    ]
+  # 6) 트래픽 전환 (LATEST로 100% 할당)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Traffic Switch'
+    entrypoint: gcloud
+    args: [
+      'run', 'services', 'update-traffic', '$_SERVICE',
+      '--to-latest',
+      '--region', '$_REGION', '--platform', 'managed'
+    ]
 
 images:
-  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
+  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA'

@@ -1,3 +1,5 @@
+/*
+
 package emory.emoryserver.aidiary.controller;
 
 import emory.emoryserver.aidiary.dto.DiaryGenerateResponseDto;
@@ -16,14 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @Tag(name = "Diary Edit", description = "일기 작성 및 수정 API")
-@RestController
+// @RestController
 @RequestMapping("/aidiary/diary")
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 public class DiaryEditController {
 
     private final AiDiaryService aiDiaryService;
 
-    /** 일기 수정 */
+    /** 일기 수정 */ /*
     @Operation(summary = "일기 수정", description = "제목/내용/감정/이미지를 수정하고 버전 및 히스토리를 남깁니다.")
     @PatchMapping("/edit/{diaryId}")
     public DiaryGenerateResponseDto editDiary(
@@ -43,3 +45,4 @@ public class DiaryEditController {
     }
 
 }
+*/

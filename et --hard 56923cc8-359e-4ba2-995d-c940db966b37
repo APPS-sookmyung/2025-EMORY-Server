@@ -1,0 +1,105 @@
+[33m8fb514c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: health error
+[33md657977[m fix: health check error
+[33mb2d4549[m fix: 문법 오류 수정
+[33m49f611e[m fix: 타임아웃 연장
+[33me8920b0[m fix homecontroller 연결 오류
+[33md6478ff[m fix: 리비전 보안 수정
+[33m5c63e7d[m feat: authorization 기능 표시
+[33m7069801[m feat: traffic 분리
+[33m2ffc85c[m fix: traffic sdk error
+[33me455f82[m fix: traffic error
+[33mddede5d[m fix: gcloud compile error
+[33mafca37e[m fix: gcloud traffic error
+[33mf797b31[m fix: gcloud run delpoy traffic error latest
+[33m05d75eb[m fix: glcoud run deploy traffic syntax
+[33mf66b8b4[m fix: gcloud run deploy boost error
+[33m97f84d5[m Feat: 캐시 삭제
+[33m1d509fd[m Feat: User 다이어리 수정
+[33md5a43f7[m Feat: 보안 수정 및 스타터의존성 추가
+[33m56ab2e1[m feat: Cloud Run 배포 안정화를 위한 CPU 부스트 옵션 추가
+[33mbbdc761[m fix traffic
+[33m43c03b2[m fix 403 error
+[33ma8705ce[m fix controller
+[33ma39904e[m fix gradle
+[33mfb0625e[m fix security build
+[33mc764218[m ci: test dev auto-deploy
+[33m959b991[m Fix: remove EndpointRequest import & clean up defaults
+[33m2aae982[m Fix: update SecurityConfig & cloudbuild.yaml
+[33mf811af3[m Fix security
+[33maf32017[m fix ping
+[33m72752bf[m fix token
+[33mdc4d3f0[m fix: cicd connected
+[33mbb14e05[m feat: userrepository
+[33m972580b[m Fix build: actuator dependency or remove EndpointRequest
+[33mde9a5bb[m sec: allow all Actuator endpoints; enable health probes
+[33m3f54dfa[m sec: permit actuator/health & swagger; expose health endpoints
+[33mf96e2d9[m ops: expose actuator health & enable probes
+[33m41af9bf[m fix: run with Java 21 on Cloud Run and bind PORT
+[33m4857ac9[m fix: cicd connect
+[33m61399ad[m fix: commit_sha change
+[33m61c35ed[m Use Cloud Build substitutions (//)
+[33m785536c[m Fix Cloud Build: use Gradle JDK21 image
+[33md6d3528[m Use Gradle toolchain JDK 21
+[33m056db01[m Fix Cloud Build config (remove images section)
+[33m0acee02[m Normalize LF endings & make gradlew executable
+[33m91157ba[m Fix: cicd build 수정
+[33mbffb711[m Fix: cloudbuild 경로 수정
+[33m2cecfa9[m Fix: cloudbuild 최종 수정
+[33m09855b3[m chore: normalize gradlew line endings (LF)
+[33m80ca6dd[m chore: make gradlew executable
+[33mb32df51[m Feat: cloud build test
+[33mcb77d63[m Feat: 트리거 실행 점검
+[33m04ba436[m Feat: cicd 확인
+[33m48c447d[m Feat: build.gradle 수정
+[33m8960fed[m Feat: Dockerfile 수정
+[33m81f3037[m Feat: cicd 적용
+[33mc50bdc8[m [Feat] 배포 오류 문제 수정
+[33m2456afe[m[33m ([m[1;32mfeat/#5-auth-user-api[m[33m)[m [Feat] JWT 수정
+[33m9d33618[m [chore] 중복 GlobalExceptionHandler 제거
+[33m2dea2c9[m [chore] build.gradle 수정
+[33mf155908[m [chore] Websocket 의존성 추가
+[33m189920e[m [Chore] Lombok 의존성 및 플러그인 설정 추가
+[33mfbab065[m[33m ([m[1;31morigin/feat/#5-auth-user-api[m[33m)[m [chore] 배포 및 서버 url https 지정
+[33mc6f1298[m Merge pull request #7 from eunground/feat/#5-auth-user-api
+[33mbae4a2f[m Merge branch 'dev' into feat/#5-auth-user-api
+[33m099ce1f[m Merge pull request #9 from APPS-sookmyung/feat/#2-ai-diary-api
+[33m303964c[m[33m ([m[1;31mupstream/feat/#2-ai-diary-api[m[33m)[m [feat] 전역 예외 응답 핸들러 추가
+[33ma2c97a2[m [refactor] ChatMessageResponsDto: sender enum / timestamp LocalDateTime으로 일원화
+[33mb268f30[m [refactor] AiDiaryService 입력값 검증 추가 및 예외 구체화
+[33m06ee96f[m [refactor] Websocket CORS 제한: *제거 및 허용 도메인 명시
+[33m5805356[m [fix] AiDiary @Document 오타 수정
+[33mfd1b36f[m [refactor] Dto Bean Validation 보강
+[33m6bdca9e[m [refactor] 코드리뷰 반영: WebSocket 채팅 기능 개선
+[33mfa5bf39[m [merge] dev에서 rebase한 후 로컬 변경사항 적용
+[33mbe417b6[m [feat] AI 대화 로그 기반 일기 저장 및 수정 기능 구현
+[33m794831c[m [feat] WebSocket 기반 AI 대화 기능 구현
+[33m15f9609[m [chore] Websocket 의존성 추가
+[33m449e4d9[m Merge: pull request #8 from dahyun1060/feature/#3-diary-api
+[33m2cde7a5[m Fix: 유효성 검증 예외 핸들러 추가
+[33m0de4e94[m Feat: 유효성 검증 어노테이션 추가
+[33m282eea1[m [Fix] @Hidden 추가로 GlobalExceptionHandler Swagger 스캔 제외
+[33m97019cb[m [Feat] 일기 CRUD 기능 초기 구현
+[33m67a95ee[m [Feat] BaseEntity 추가
+[33mb35dc59[m [Feat] MongoDB Auditing 설정 추가
+[33m8ffe06d[m [Feat] common 패키지 초기 세팅
+[33m4abb929[m Merge branch 'dev' into feat/#5-auth-user-api
+[33mef485ae[m [Fix] Issue 템플릿 수정
+[33mad320a8[m [Fix] Issue 템플릿 수정
+[33m5a93b79[m [Fix] Issue 템플릿 수정
+[33m271949b[m [Fix] config.yml 수정
+[33m1f1000f[m [fix] config.yml 파일 true 설정 변경
+[33me1320c7[m [Feat] 로그인 API 구현 및 JWT 인증
+[33mdbef0b9[m Resolve merge conflict in application.properties
+[33m34cdb39[m Merge pull request #6 from APPS-sookmyung/feat/#2-ai-diary-api
+[33me56af46[m Merge branch 'dev' of https://github.com/APPS-sookmyung/2025-EMORY-Server into dev
+[33m1eff414[m [chore] README 파일 작성
+[33m2273f51[m [Chore] 모든 요청/응답 DTO에 Lombok @Data 적용
+[33m490005a[m [Chore] Lombok 의존성 및 플러그인 설정 추가
+[33m276b5bc[m [Feat] AI 일기 기본 컨트롤러 및 Dto 구성
+[33ma1bb3ce[m [chore] feature request에 title 기본값 추가
+[33m7de219c[m [chore] config.yml 추가
+[33mfb22c20[m[33m ([m[1;31mupstream/main[m[33m, [m[1;31morigin/feature/#5-auth-user[m[33m, [m[1;32mfeature/#5-auth-user[m[33m)[m [chore] Issue 및 PR 템플릿 추가
+[33m2622d50[m Merge pull request #1 from APPS-sookmyung/swagger-ui
+[33mbcad931[m[33m ([m[1;31mupstream/swagger-ui[m[33m)[m [chore] SwaggerConfig 파일생성 및 기본 설정 추가
+[33m7e4ab40[m [chore] springdoc 의존성 추가
+[33m1f2e6dd[m Init: 프로젝트 초기 세팅
