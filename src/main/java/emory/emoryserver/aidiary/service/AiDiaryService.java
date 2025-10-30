@@ -72,6 +72,7 @@ public class AiDiaryService {
         d.setContent(content);
         d.setMood(null);
         d.setImageId(null);
+        d.setScraped(false);
         d.setVersion(1);
         d.setStatus("DRAFT");
         d.setEditable(true);
@@ -200,6 +201,7 @@ public class AiDiaryService {
                     .version(d.getVersion())
                     .status(d.getStatus())
                     .editable(d.getEditable())
+                    .scraped(d.getScraped())
                     .date(d.getDateOfDay())
                     .createdAt(d.getCreatedAt())
                     .updatedAt(d.getUpdatedAt())

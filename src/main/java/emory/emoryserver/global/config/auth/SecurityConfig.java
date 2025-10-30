@@ -62,6 +62,24 @@ public class SecurityConfig {
 
                 // 권한 규칙
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
+                        .requestMatchers(
+                                "/api/calendar/oauth2/authorize",
+                                "/api/calendar/oauth2/callback",
+                                "/api/calendar/google/**"
+                        ).permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // diary 관련 API 인증 필요
+                        .requestMatchers("/aidiary/**").authenticated()
+                        .requestMatchers("/diaries/**").authenticated()
+                        .requestMatchers("/diary/**").authenticated()
+                        .requestMatchers("/calendar/**").authenticated()
+                        .requestMatchers("/timecapsule/**").authenticated()
+                        .requestMatchers("/report/**").authenticated()
+                        .requestMatchers("/api/user/**", "/api/admin/**").authenticated()
+
                         // 프리플라이트 전면 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

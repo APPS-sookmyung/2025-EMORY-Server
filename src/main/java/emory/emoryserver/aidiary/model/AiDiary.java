@@ -37,6 +37,9 @@ public class AiDiary {
     private String imageId;
 
     @Builder.Default
+    private Boolean scraped = false; // 스크랩
+
+    @Builder.Default
     private Integer version = 1; //v1
     @Builder.Default
     private String status = "DRAFT";// "DRAFT" | "FINAL"

@@ -36,6 +36,9 @@ public class DiaryGenerateResponseDto {
     @Schema(description = "수정 가능 여부")
     private Boolean editable;
 
+    @Schema(description = "스크랩 여부", example = "false")
+    private Boolean scraped;
+
     @Schema(description = "일기 생성 날짜", example = "2025-07-16")
     private LocalDate date;
 
