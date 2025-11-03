@@ -4,12 +4,14 @@ import emory.emoryserver.aidiary.model.AiDiary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 import org.springframework.data.mongodb.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface AiDiaryRepository extends MongoRepository<AiDiary, String> {
     Optional<AiDiary> findTopBySessionIdOrderByCreatedAtDesc(String sessionId);
     // 수정/최종 저장시 본인것만 찾기
