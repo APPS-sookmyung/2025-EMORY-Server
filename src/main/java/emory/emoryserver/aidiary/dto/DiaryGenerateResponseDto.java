@@ -1,4 +1,4 @@
-package emory.emoryserver.diary.dto;
+package emory.emoryserver.aidiary.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -11,29 +11,35 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DiaryResponse {
+public class DiaryGenerateResponseDto {
     @Schema(description = "일기 ID")
     private String diaryId;
 
     @Schema(description = "일기 제목")
     private String title;
 
-    @Schema(description = "일기 내용")
+    @Schema(description = "AI가 생성한 일기 내용")
     private String content;
 
-    @Schema(description = "감정 태그", example = "기쁨")
+    @Schema(description = "감정 태그", example = "슬픔")
     private String emotion;
 
     @Schema(description = "이미지 ID")
     private String imageId;
 
-    @Schema(description = "스크랩 여부")
-    private Boolean scraped;
+    @Schema(description = "버전")
+    private Integer version;
 
-    @Schema(description = "상태 (항상 FINAL)", example = "FINAL")
+    @Schema(description = "상태", example = "DRAFT")
     private String status;
 
-    @Schema(description = "일기 날짜", example = "2025-09-20")
+    @Schema(description = "수정 가능 여부")
+    private Boolean editable;
+
+    @Schema(description = "스크랩 여부", example = "false")
+    private Boolean scraped;
+
+    @Schema(description = "일기 생성 날짜", example = "2025-07-16")
     private LocalDate date;
 
     @Schema(description = "생성 시각")

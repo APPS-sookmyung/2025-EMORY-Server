@@ -24,7 +24,9 @@ public class User {
     private String provider;
     private String providerId;
 
+    @Builder.Default
     private boolean diaryReminderEnabled = false;
+    @Builder.Default
     private String reminderTime = null;
 
     public void updateNickname(String nickname) {
