@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Timecapsule", description = "타임캡슐 API - 작년 같은 주의 일기 요약")
+@Tag(name = "Timecapsule", description = "타임캡슐 API")
 @RestController
 @RequestMapping("/timecapsule")
 @RequiredArgsConstructor
@@ -19,7 +19,7 @@ public class TimecapsuleController {
     private final UserIdExtractor userIdExtractor;
 
     @Operation(summary = "타임캡슐 조회",
-            description = "작년 오늘과 같은 주(일~토)에 작성된 일기들을 AI가 요약하여 보여줍니다. 요약 내용과 함께 해당 주의 AI 이미지들도 함께 제공됩니다.")
+            description = "작년 오늘과 같은 주(일~토)에 작성된 일기 기준")
     @GetMapping
     public TimecapsuleResponseDto getTimecapsule(@AuthenticationPrincipal String email) {
         String userId = userIdExtractor.getUserIdFromEmail(email);

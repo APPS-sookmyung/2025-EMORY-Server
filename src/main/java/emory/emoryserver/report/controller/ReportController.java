@@ -7,8 +7,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat; // import 추가
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.YearMonth; // import 추가
 
 @Tag(name = "Report", description = "주간/월간 감정 리포트 API")
 @RestController
@@ -19,25 +23,23 @@ public class ReportController {
     private final ReportService reportService;
     private final UserIdExtractor userIdExtractor;
 
-    @Operation(summary = "주간 감정 리포트",
-            description = "특정 주차의 감정 카테고리별 통계를 그래프 데이터로 제공합니다. 주차는 일요일부터 토요일까지를 기준으로 합니다.")
-    @GetMapping("/weekly/{year}/{week}")
+    @Operation(summary = "주간 감정 리포트", description = "일요일부터 토요일 기준, 감정별 통계")
+    @GetMapping("/weekly/{date}")
     public ReportResponseDto getWeeklyReport(
-            @Parameter(description = "년도", example = "2025") @PathVariable Integer year,
-            @Parameter(description = "주차 (1-53)", example = "38") @PathVariable Integer week,
+            @Parameter(description = "기준 날짜 (YYYY-MM-DD)", example = "2025-09-15")
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal String email) {
         String userId = userIdExtractor.getUserIdFromEmail(email);
-        return reportService.getWeeklyReport(userId, year, week);
+        return reportService.getWeeklyReport(userId, date);
     }
 
-    @Operation(summary = "월간 감정 리포트",
-            description = "특정 월의 감정 카테고리별 통계를 그래프 데이터로 제공합니다.")
-    @GetMapping("/monthly/{year}/{month}")
+    @Operation(summary = "월간 감정 리포트")
+    @GetMapping("/monthly/{yearMonth}") // URL 경로 수정
     public ReportResponseDto getMonthlyReport(
-            @Parameter(description = "년도", example = "2025") @PathVariable Integer year,
-            @Parameter(description = "월 (1-12)", example = "9") @PathVariable Integer month,
+            @Parameter(description = "기준 월 (YYYY-MM)", example = "2025-09")
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth, // 파라미터 수정
             @AuthenticationPrincipal String email) {
         String userId = userIdExtractor.getUserIdFromEmail(email);
-        return reportService.getMonthlyReport(userId, year, month);
+        return reportService.getMonthlyReport(userId, yearMonth); // 서비스 호출 수정
     }
 }

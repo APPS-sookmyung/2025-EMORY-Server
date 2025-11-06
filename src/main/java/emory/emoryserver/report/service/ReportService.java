@@ -26,15 +26,10 @@ public class ReportService {
     /**
      * 주간 리포트 생성 (일요일~토요일)
      */
-    public ReportResponseDto getWeeklyReport(String userId, int year, int week) {
-        // 해당 연도의 특정 주차의 시작일과 종료일 계산
-        LocalDate jan1 = LocalDate.of(year, 1, 1);
+    public ReportResponseDto getWeeklyReport(String userId, LocalDate date) {
 
-        // ISO 주차 기준으로 계산 후 일요일 기준으로 조정
-        LocalDate weekStart = jan1
-                .with(ChronoField.ALIGNED_WEEK_OF_YEAR, week)
-                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
-
+        // 기준 날짜가 속한 주의 시작일(일요일)과 종료일(토요일) 계산
+        LocalDate weekStart = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         LocalDate weekEnd = weekStart.plusDays(6); // 토요일까지
 
         // 해당 주간의 모든 일기 조회 (감정이 있는 것만)
@@ -47,8 +42,9 @@ public class ReportService {
     /**
      * 월간 리포트 생성
      */
-    public ReportResponseDto getMonthlyReport(String userId, int year, int month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
+    // 메서드 시그니처 수정 (year, month -> yearMonth)
+    public ReportResponseDto getMonthlyReport(String userId, YearMonth yearMonth) {
+        // YearMonth.of(year, month) 코드가 필요 없어짐
         LocalDate monthStart = yearMonth.atDay(1);
         LocalDate monthEnd = yearMonth.atEndOfMonth();
 
