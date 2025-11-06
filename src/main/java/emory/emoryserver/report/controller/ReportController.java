@@ -26,7 +26,7 @@ public class ReportController {
     @Operation(summary = "주간 감정 리포트", description = "일요일부터 토요일 기준, 감정별 통계")
     @GetMapping("/weekly/{date}")
     public ReportResponseDto getWeeklyReport(
-            @Parameter(description = "기준 날짜 (YYYY-MM-DD)", example = "2025-09-15")
+            @Parameter(description = "기준 날짜 (YYYY-MM-DD)")
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal String email) {
         String userId = userIdExtractor.getUserIdFromEmail(email);
@@ -36,10 +36,10 @@ public class ReportController {
     @Operation(summary = "월간 감정 리포트")
     @GetMapping("/monthly/{yearMonth}") // URL 경로 수정
     public ReportResponseDto getMonthlyReport(
-            @Parameter(description = "기준 월 (YYYY-MM)", example = "2025-09")
-            @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth, // 파라미터 수정
+            @Parameter(description = "기준 월 (YYYY-MM)")
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth,
             @AuthenticationPrincipal String email) {
         String userId = userIdExtractor.getUserIdFromEmail(email);
-        return reportService.getMonthlyReport(userId, yearMonth); // 서비스 호출 수정
+        return reportService.getMonthlyReport(userId, yearMonth);
     }
 }
