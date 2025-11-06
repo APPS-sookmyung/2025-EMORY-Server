@@ -14,14 +14,14 @@ import java.util.Map;
 
 @Tag(name = "Google Calendar", description = "구글 캘린더 연동 API")
 @RestController
-@RequestMapping("/api/calendar")
+@RequestMapping("/calendar")
 @RequiredArgsConstructor
 public class GoogleCalendarController {
 
     private final GoogleCalendarService googleCalendarService;
     private final UserIdExtractor userIdExtractor;
 
-    @Operation(summary = "구글 캘린더 연동 시작", description = "OAuth 인증 URL을 반환합니다")
+    @Operation(summary = "구글 캘린더 연동 시작", description = "OAuth 인증 URL을 반환")
     @GetMapping("/google/connect")
     public ResponseEntity<Map<String, String>> connectGoogleCalendar(@AuthenticationPrincipal String email) {
         String userId = userIdExtractor.getUserIdFromEmail(email);
