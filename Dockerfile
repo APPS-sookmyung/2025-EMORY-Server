@@ -10,4 +10,7 @@ WORKDIR /app
 COPY build/libs/app.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["sh","-lc","echo PORT=$PORT && exec java \
+  -Dserver.port=${PORT:-8080} \
+  -Dserver.address=0.0.0.0 \
+  -jar app.jar"]
