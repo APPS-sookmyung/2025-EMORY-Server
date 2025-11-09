@@ -7,10 +7,13 @@ RUN apk add --no-cache tzdata && \
 WORKDIR /app
 
 # Gradle에서 app.jar 출력( build/libs/app.jar )이 전제
-COPY build/libs/app.jar app.jar
+COPY build/libs/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["sh","-lc","echo PORT=$PORT && exec java \
-  -Dserver.port=${PORT:-8080} \
-  -Dserver.address=0.0.0.0 \
-  -jar app.jar"]
+ENTRYPOINT ["sh","-lc","\
+  echo PORT=$PORT && \
+  java -version && \
+  ls -l /app && \
+  test -f /app/app.jar || (echo '❌ app.jar not found' && exit 1); \
+  exec java -Dserver.port=${PORT:-8080} -Dserver.address=0.0.0.0 -jar /app/app.jar \
+"]
