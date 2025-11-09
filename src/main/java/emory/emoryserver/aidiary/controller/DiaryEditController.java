@@ -1,4 +1,4 @@
-
+/*
 
 package emory.emoryserver.aidiary.controller;
 
@@ -45,3 +45,5 @@ public class DiaryEditController {
     }
 
 }
+
+*/
