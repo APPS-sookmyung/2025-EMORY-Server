@@ -6,8 +6,8 @@ RUN apk add --no-cache tzdata && \
 
 WORKDIR /app
 
-ARG JAR_FILE=build/libs/emoryserver-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
+# Gradle에서 app.jar 출력( build/libs/app.jar )이 전제
+COPY build/libs/app.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","app.jar"]
