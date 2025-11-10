@@ -77,8 +77,8 @@ steps:
       '--platform', 'managed',
       '--allow-unauthenticated',
       '--cpu', '1',
-      '--timeout', '600',
-      '--memory', '1Gi',
+      '--timeout', '300',
+      '--memory', '500Mi',
       '--cpu-boost',
       '--no-traffic',
       '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=$_MONGO_URI,JWT_SECRET=$_JWT_SECRET'
