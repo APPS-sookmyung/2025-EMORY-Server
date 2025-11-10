@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre
 
 ENV TZ=Asia/Seoul
 RUN apk add --no-cache tzdata && \
