@@ -1,4 +1,3 @@
-/*
 package emory.emoryserver.ai.repository;
 
 import emory.emoryserver.ai.model.ChatLog;
@@ -14,5 +13,3 @@ public interface ChatLogRepository extends MongoRepository<ChatLog, String> {
     // 세션만 기준 (필요 시)
     List<ChatLog> findBySessionIdOrderByCreatedAtAsc(String sessionId);
 }
-
-*/
