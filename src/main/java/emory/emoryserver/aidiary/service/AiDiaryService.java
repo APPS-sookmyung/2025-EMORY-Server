@@ -1,3 +1,5 @@
+/*
+
 package emory.emoryserver.aidiary.service;
 
 import emory.emoryserver.ai.model.ChatLog;
@@ -31,6 +33,7 @@ public class AiDiaryService {
     /**
      * 1) DB 저장 대화로그 기반 생성 (실제 사용 버전)
      */
+/*
     public DiaryGenerateResponseDto generateDiaryFromSession(@Valid DiaryGenerateRequestDto req, String userId) {
         if (req.getSessionId() == null || req.getSessionId().isBlank()) {
             throw new IllegalArgumentException("sessionId는 필수입니다.");
@@ -115,7 +118,11 @@ public class AiDiaryService {
         String firstLine = content.strip().lines().findFirst().orElse("오늘의 기록");
         return firstLine.length() > 20 ? firstLine.substring(0, 20) + "…" : firstLine;
     }
+
+ */
+
     /** ✅ 일기 수정(버전 + 히스토리 적재) */
+/*
     public DiaryGenerateResponseDto updateDiary(String diaryId, String userId, DiaryUpdateRequestDto req) {
         AiDiary d = aiDiaryRepository.findByIdAndUserId(diaryId, userId)
                 .orElseThrow(() -> new DiaryNotFoundException(diaryId));
@@ -156,6 +163,7 @@ public class AiDiaryService {
     }
 
     /** ✅ 최종 저장(확정) — 더 이상 수정 불가 */
+/*
     public DiaryGenerateResponseDto finalizeDiary(DiarySaveRequestDto req, String userId) {
         AiDiary d = aiDiaryRepository.findByIdAndUserId(req.getDiaryId(), userId)
                 .orElseThrow(() -> new DiaryNotFoundException(req.getDiaryId()));
@@ -208,3 +216,5 @@ public class AiDiaryService {
                     .build();
         }
     }
+
+*/

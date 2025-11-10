@@ -1,3 +1,4 @@
+/*
 package emory.emoryserver.aidiary.controller;
 
 import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
@@ -23,3 +24,5 @@ public class DiaryGenerateController {
     }
 
 }
+
+*/

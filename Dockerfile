@@ -1,19 +1,15 @@
 FROM eclipse-temurin:21-jre-alpine
 
-ENV TZ=Asia/Seoul
+ENV TZ=Asia/Seoul \
+    JAVA_HOME=/opt/java/openjdk \
+    PATH="/opt/java/openjdk/bin:${PATH}"
+
 RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 WORKDIR /app
-
-# Gradle에서 app.jar 출력( build/libs/app.jar )이 전제
-COPY build/libs/*.jar app.jar
+COPY build/libs/*.jar /app/app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["sh","-lc","\
-  echo PORT=$PORT && \
-  java -version && \
-  ls -l /app && \
-  test -f /app/app.jar || (echo '❌ app.jar not found' && exit 1); \
-  exec java -Dserver.port=${PORT:-8080} -Dserver.address=0.0.0.0 -jar /app/app.jar \
-"]
+# 중요: sh -lc 쓰지 말고 exec-form으로 바로 java 실행
+ENTRYPOINT ["java","-Dserver.port=${PORT}","-Dserver.address=0.0.0.0","-jar","/app/app.jar"]
