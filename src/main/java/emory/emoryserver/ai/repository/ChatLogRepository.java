@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+@ConditionalOnProperty(name="features.diary.enabled", havingValue="true", matchIfMissing=false)
+
 @Repository
 public interface ChatLogRepository extends MongoRepository<ChatLog, String> {
     List<ChatLog> findBySessionIdAndUserIdOrderByCreatedAtAsc(String sessionId, String userId);

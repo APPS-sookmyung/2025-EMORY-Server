@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+@ConditionalOnProperty(name="features.diary.enabled", havingValue="true", matchIfMissing=false)
+
 @Service
 @RequiredArgsConstructor
 public class AiDiaryService {
