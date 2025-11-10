@@ -2,7 +2,7 @@ substitutions:
   _REGION: "asia-northeast3"
   _REPO: "emory-repo"
   _SERVICE: "emory-server"
-  _JWT_SECRET: "replace-me"
+  _JWT_SECRET: "dGhpcy1pcy1hLXZlcnktdmVyeS1sb25nLWFuZC1zdHJvbmctc2VjcmV0LWtleS0zMitjaGFycyE="
   _MONGO_URI: "mongodb+srv://<emory_user>:<Wjddms416>@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory"
 
 options:
@@ -81,7 +81,7 @@ steps:
       '--memory', '512Mi',
       '--cpu-boost',
       '--no-traffic',
-      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=mongodb+srv://<emory_user>:<Wjddms416>@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory'
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=$_MONGO_URI,JWT_SECRET=$_JWT_SECRET'
     ]
   # 6) 트래픽 전환 (LATEST로 100% 할당)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
