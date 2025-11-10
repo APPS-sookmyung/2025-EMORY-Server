@@ -4,7 +4,10 @@ substitutions:
   _SERVICE: "emory-server"
   _JWT_SECRET: "dGhpcy1pcy1hLXZlcnktdmVyeS1sb25nLWFuZC1zdHJvbmctc2VjcmV0LWtleS0zMitjaGFycyE="
   _MONGO_URI: "mongodb+srv://emory_user:Wjddms416@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory"
-
+  _DB_NAME: "emory_db"
+  _DB_USER: "root"
+  _DB_PASSWORD: "Wjddms416!"
+  _DB_CONNECTION_NAME: "emory-2025:asia-northeast3:emory-db"
 options:
   logging: CLOUD_LOGGING_ONLY
 
@@ -81,7 +84,7 @@ steps:
       '--memory', '1Gi',
       '--cpu-boost',
       '--no-traffic',
-      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=$_MONGO_URI,JWT_SECRET=$_JWT_SECRET'
+      '--set-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=$_MONGO_URI,JWT_SECRET=$_JWT_SECRET,DB_NAME=$_DB_NAME,DB_USER=$_DB_USER,DB_PASSWORD=$_DB_PASSWORD,DB_CONNECTION_NAME=$_DB_CONNECTION_NAME'
     ]
   # 6) 트래픽 전환 (LATEST로 100% 할당)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
