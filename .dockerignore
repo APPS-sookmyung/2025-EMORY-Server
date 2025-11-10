@@ -1,0 +1,11 @@
+# 불필요한 것들 제외
+.git
+.gitignore
+.gradle/
+node_modules/
+*.log
+__pycache__/
+build/
+
+# jar만 포함 예외 처리 (이 줄이 핵심)
+!build/libs/*.jar
