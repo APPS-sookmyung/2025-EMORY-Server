@@ -7,11 +7,10 @@ RUN apk add --no-cache tzdata && \
 WORKDIR /app
 
 # Gradle에서 app.jar 출력( build/libs/app.jar )이 전제
-ARG JAR_FILE=build/libs/*-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
+COPY build/libs/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["sh","-c","\
+ENTRYPOINT ["sh","-lc","\
   echo PORT=$PORT && \
   java -version && \
   ls -l /app && \
