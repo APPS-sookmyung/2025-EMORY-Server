@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Tag(name = "Google Calendar", description = "구글 캘린더 연동 API")
 @RestController
-@RequestMapping("/calendar")
+@RequestMapping("/api/calendar")
 @RequiredArgsConstructor
 public class GoogleCalendarController {
 
