@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+<<<<<<< HEAD
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -16,10 +17,17 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
+=======
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+>>>>>>> 50a6162384f5c48587bb8bb05045ed41f702a54e
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+<<<<<<< HEAD
     private static final AntPathMatcher matcher = new AntPathMatcher();
 
     // SecurityConfig.PUBLIC 과 동일하게 유지 (경로 한 글자라도 다르면 스킵 실패)
@@ -73,5 +81,42 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // log.warn("JWT filter error", ex);
             chain.doFilter(req, res);
         }
+=======
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+
+        if (path.startsWith("/api/auth") || path.startsWith("/swagger") || path.startsWith("/v3")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            String token = jwtTokenProvider.resolveToken(request);
+
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                var authentication = jwtTokenProvider.getAuthentication(token);
+
+                if (authentication != null) {
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            (UsernamePasswordAuthenticationToken) authentication;
+
+                    authenticationToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
+            }
+        } catch (Exception e) {
+            // 예외 무시
+        }
+
+        filterChain.doFilter(request, response);
+>>>>>>> 50a6162384f5c48587bb8bb05045ed41f702a54e
     }
 }

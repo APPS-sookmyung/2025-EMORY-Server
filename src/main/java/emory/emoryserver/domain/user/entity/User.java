@@ -3,14 +3,20 @@ package emory.emoryserver.domain.user.entity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+<<<<<<< HEAD
 import lombok.Builder;
+=======
+>>>>>>> 50a6162384f5c48587bb8bb05045ed41f702a54e
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+<<<<<<< HEAD
 @Builder
+=======
+>>>>>>> 50a6162384f5c48587bb8bb05045ed41f702a54e
 @Document(collection = "users")
 public class User {
 
@@ -18,6 +24,7 @@ public class User {
     private String id;
 
     private String email;
+<<<<<<< HEAD
     private String password;  // SNS 로그인만 한다면 사용하지 않아도 됨
     private String nickname;
 
@@ -37,4 +44,16 @@ public class User {
         this.diaryReminderEnabled = enabled;
         this.reminderTime = time;
     }
+=======
+
+    private String password;
+
+    private String nickname;
+
+    public User(String email, String password, String nickname) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+    }
+>>>>>>> 50a6162384f5c48587bb8bb05045ed41f702a54e
 }
