@@ -23,7 +23,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword()) // 이미 암호화된 비밀번호
+<<<<<<< HEAD
                 .authorities("ROLE_USER")
+=======
+                .authorities(Collections.emptyList())
+>>>>>>> 50a6162384f5c48587bb8bb05045ed41f702a54e
                 .build();
     }
 }
