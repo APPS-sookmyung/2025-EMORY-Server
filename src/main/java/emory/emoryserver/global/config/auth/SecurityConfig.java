@@ -26,18 +26,35 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-    // Swagger & 공개 경로 화이트리스트
+    /**
+     * 공개(permitAll) 경로
+     * - /error: Whitelabel 루프 방지용
+     * - swagger 관련: springdoc 기본 경로 포함
+     * - actuator health: Cloud Run 확인용(옵션)
+     */
     private static final String[] PUBLIC = {
             "/", "/ping",
-            "/api/auth/**",                // <- 실제 AuthController 경로와 일치
-            "/actuator/health", "/actuator/info",
-
-            // springdoc-openapi / swagger
             "/error",
+            "/favicon.ico",
+            "/robots.txt",
+
+            // Auth
+            "/api/auth/**",
+
+            // Calendar OAuth (허용 필요)
+            "/api/calendar/oauth2/authorize",
+            "/api/calendar/oauth2/callback",
+            "/api/calendar/google/**",
+
+            // Actuator
+            "/actuator/health", "/actuator/health/**",
+            "/actuator/info",
+
+            // Swagger (springdoc-openapi)
+            "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
-            "/webjars/**",
-            "/favicon.ico"
+            "/webjars/**"
     };
 
     @Bean
@@ -47,29 +64,33 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
 
-                // 세션 완전 비활성(쿠키 생성 방지)
+                // Stateless
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 기본 로그인/HTTP Basic 끄기(예상치 못한 403/리다이렉트 방지)
+                // 기본 로그인/Basic 비활성화
                 .formLogin(fl -> fl.disable())
                 .httpBasic(hb -> hb.disable())
 
-                // 예외 전략: 무토큰 접근은 401, 권한없음은 403
+                // 예외 응답: 인증 실패 401, 권한 없음 403
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                        .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN))
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json;charset=UTF-8");
+                            res.getWriter().write("{\"message\":\"Unauthorized\"}");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            res.setContentType("application/json;charset=UTF-8");
+                            res.getWriter().write("{\"message\":\"Forbidden\"}");
+                        })
                 )
 
-                // 권한 규칙
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
-                        .requestMatchers(
-                                "/api/calendar/oauth2/authorize",
-                                "/api/calendar/oauth2/callback",
-                                "/api/calendar/google/**"
-                        ).permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // 프리플라이트는 최우선 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 공개 경로
+                        .requestMatchers(PUBLIC).permitAll()
 
                         // diary 관련 API 인증 필요
                         .requestMatchers("/aidiary/**").authenticated()
@@ -80,30 +101,21 @@ public class SecurityConfig {
                         .requestMatchers("/report/**").authenticated()
                         .requestMatchers("/api/user/**", "/api/admin/**").authenticated()
 
-                        // 프리플라이트 전면 허용
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 공개 경로 허용 (anyRequest보다 반드시 먼저)
-                        .requestMatchers(PUBLIC).permitAll()
-
-                        // 그 외 보호
+                        // 나머지 전부 보호
                         .anyRequest().authenticated()
                 )
 
-                // JWT 필터 연결: UsernamePasswordAuthenticationFilter 앞
+                // JWT 필터
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // CORS (필요시 origin을 구체 도메인으로 제한)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of(
-                "*"
-        ));
-        cfg.setAllowCredentials(false); // 쿠키 안 쓰면 false 권장
+        cfg.setAllowedOriginPatterns(List.of("*"));
+        cfg.setAllowCredentials(false);
         cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setExposedHeaders(List.of("Authorization","Content-Type"));
