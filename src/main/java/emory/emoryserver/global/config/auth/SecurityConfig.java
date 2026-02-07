@@ -112,17 +112,28 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("*"));
-        cfg.setAllowCredentials(false);
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("*"));
-        cfg.setExposedHeaders(List.of("Authorization","Content-Type"));
-        cfg.setMaxAge(3600L);
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration cfg = new CorsConfiguration();
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", cfg);
-        return source;
-    }
+    // ✅ 허용할 프론트 도메인만 명시
+    cfg.setAllowedOrigins(List.of(
+            "https://apps-emory.netlify.app",
+            "http://localhost:5173"
+    ));
+        // (권장) Authorization 헤더 노출/허용
+    cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+    cfg.setAllowedHeaders(List.of("*"));
+    cfg.setExposedHeaders(List.of("Authorization","Content-Type"));
+
+    // ✅ JWT 헤더 기반이면 쿠키는 안 쓰지만, 실무에서 종종 true로 둠
+    // - true로 하면 allowedOrigins에 '*' 못 씀(지금은 명시 도메인이라 OK)
+    cfg.setAllowCredentials(true);
+
+    cfg.setMaxAge(3600L);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", cfg);
+    return source;
+}
+
 }
