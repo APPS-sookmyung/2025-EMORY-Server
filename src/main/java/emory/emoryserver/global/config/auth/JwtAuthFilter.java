@@ -58,11 +58,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String token = auth.substring(7);
             if (jwtTokenProvider.validateToken(token)) {
-                var principal = jwtTokenProvider.getAuthentication(token); // UserDetails 또는 Authentication 반환
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        principal, null, principal.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                var authObj = jwtTokenProvider.getAuthentication(token); // Authentication 또는 UserDetails
+
+                if (authObj instanceof org.springframework.security.core.Authentication authentication) {
+
+                    // details 세팅은 AbstractAuthenticationToken일 때만 가능
+                    if (authentication instanceof org.springframework.security.authentication.AbstractAuthenticationToken aat) {
+                        aat.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+                    }
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                } else if (authObj instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+
             }
             // 토큰 무효여도 여기서 sendError/redirect 하지 않음 → EntryPoint가 401 처리
 
