@@ -1,54 +1,41 @@
 package emory.emoryserver.ai.controller;
 
-
-import emory.emoryserver.ai.dto.chat.ChatMessageRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatSaveRequestDto;
 import emory.emoryserver.ai.dto.chat.ChatStartRequestDto;
-import emory.emoryserver.aidiary.dto.DiaryGenerateRequestDto;
+import emory.emoryserver.ai.dto.chat.ChatStartResponseDto;
+import emory.emoryserver.ai.service.ChatSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "AI Chat", description = "AI 실시간 대화 API")
+@Tag(name = "AI Chat", description = "AI 실시간 대화(Realtime) 세션 관리/저장 API")
 @RestController
 @RequestMapping("/ai/chat")
+@RequiredArgsConstructor
 public class ChatController {
 
-    @Operation(summary = "AI 실시간 대화 시작", description = "선택한 감정 및 캘린더 일정을 기반으로 AI와 음성 대화를 시작합니다.")
+    private final ChatSessionService chatSessionService;
+
+    @Operation(summary = "대화 세션 시작", description = "백엔드 세션을 생성하고 sessionId를 반환합니다.")
     @PostMapping("/start")
-    public void startSession(@RequestBody ChatStartRequestDto request) {
-        //세션 시작 로직
+    public ChatStartResponseDto startSession(@RequestBody ChatStartRequestDto request) {
+        String sessionId = chatSessionService.startSession(
+                request.getSelectedEmotion(),
+                request.getCalendarSummary()
+        );
+        return ChatStartResponseDto.builder().sessionId(sessionId).build();
     }
 
-    @Operation(summary = "사용자 메시지 전송", description = "사용자의 음성메시지를 전송해 대화 상태 갱신")
-    @PostMapping("/message")
-    public void sendMessage(@RequestBody ChatMessageRequestDto request) {
-        //메시지 처리 로직
-    }
-
-    @Operation(summary = "대화 상태 모니터링", description = "대화 중 상태 전달을 위한 보조 메시지. 예) 타이핑 중 여부 확인")
-    @GetMapping("/status")
-    public void getStatus(@RequestParam String sessionId) {
-        //상태 전달 로직
-    }
-
-    @Operation(summary = "AI 실시간 대화 종료")
+    @Operation(summary = "대화 세션 종료(서버 상태만)", description = "WebRTC 연결 종료는 클라이언트가 수행하고, 서버는 세션 상태만 STOPPED로 기록합니다.")
     @PostMapping("/stop")
     public void stopSession(@RequestParam String sessionId) {
-        // 세션 종료 로직
-    }
-    
-    @Operation(summary = "대화 결과 저장")
-    @PostMapping("/save")
-    public void saveResult(@RequestBody ChatSaveRequestDto request) {
-        //결과 저장 로직
-        // 저장할 대화 내용 처리
+        chatSessionService.stopSession(sessionId);
     }
 
-    @Operation(summary = "AI 일기 생성", description = "vNext: POST /aidiary/diary/generate 사용")
-    @PostMapping("/generate-diary")
-    @Deprecated
-    public void generateDiary(@RequestBody DiaryGenerateRequestDto request) {
-        // AiDiaryService로 위임
+    @Operation(summary = "대화 결과 저장", description = "클라이언트가 모은 transcript(messages)를 MongoDB에 저장하고 세션을 SAVED 처리합니다.")
+    @PostMapping("/save")
+    public void saveResult(@RequestBody ChatSaveRequestDto request) {
+        chatSessionService.saveConversation(request);
     }
 }
