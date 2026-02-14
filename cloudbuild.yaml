@@ -3,7 +3,7 @@ substitutions:
   _REPO: "emory-repo"
   _SERVICE: "emory-server"
   _JWT_SECRET: "dGhpcy1pcy1hLXZlcnktdmVyeS1sb25nLWFuZC1zdHJvbmctc2VjcmV0LWtleS0zMitjaGFycyE="
-  _MONGO_URI: "mongodb+srv://tlswjddms416:Wjddms416@cluster0.dkuycsq.mongodb.net/emory?retryWrites=true&w=majority&appName=Cluster0"
+  SPRING_DATA_MONGODB_URI: "mongodb+srv://tlswjddms416:Wjddms416@cluster0.dkuycsq.mongodb.net/emory?retryWrites=true&w=majority&appName=Cluster0"
   # _MONGO_URI: "mongodb+srv://emory_user:Wjddms416@emory.7vmc0xu.mongodb.net/?retryWrites=true&w=majority&appName=emory"
   # _MONGO_URI: "mongodb+srv://emory_user:emoryuser123@cluster0.ump7dto.mongodb.net/emory?appName=Cluster0"
   _DB_NAME: "emory_db"
@@ -85,8 +85,7 @@ steps:
       '--timeout', '600',
       '--memory', '512Mi',    # 메모리도 기존 성공 환경에 맞춤
       '--cpu-boost',
-      '--no-traffic',
-      '--update-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=$_MONGO_URI,JWT_SECRET=$_JWT_SECRET,DB_NAME=$_DB_NAME,DB_USER=$_DB_USER,DB_PASSWORD=$_DB_PASSWORD,DB_CONNECTION_NAME=$_DB_CONNECTION_NAME'
+      '--update-env-vars', 'SPRING_PROFILES_ACTIVE=prod,SPRING_DATA_MONGODB_URI=$SPRING_DATA_MONGODB_URI,JWT_SECRET=$_JWT_SECRET,DB_NAME=$_DB_NAME,DB_USER=$_DB_USER,DB_PASSWORD=$_DB_PASSWORD,DB_CONNECTION_NAME=$_DB_CONNECTION_NAME'
     ]
 
   # 6) 트래픽 전환 (LATEST로 100% 할당)
