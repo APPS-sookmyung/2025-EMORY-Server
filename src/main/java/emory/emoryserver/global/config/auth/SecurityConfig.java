@@ -98,8 +98,7 @@ public class SecurityConfig {
                         .requestMatchers("/diary/**").authenticated()
                         .requestMatchers("/calendar/**").authenticated()
                         .requestMatchers("/timecapsule/**").authenticated()
-                        .requestMatchers("/report/**").permitAll()
-                        .requestMatchers("/ai/**").permitAll()
+                        .requestMatchers("/report/**").authenticated()
                         .requestMatchers("/api/user/**", "/api/admin/**").authenticated()
 
                         // 나머지 전부 보호
