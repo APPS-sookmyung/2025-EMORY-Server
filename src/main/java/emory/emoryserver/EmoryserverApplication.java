@@ -9,7 +9,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 		"emory.emoryserver.aidiary.repository",
 		"emory.emoryserver.ai.repository",
 		"emory.emoryserver.calendar.repository",
-		"emory.emoryserver.domain.user.repository"
+		"emory.emoryserver.domain.user.repository",
+		"emory.emoryserver.report.repository"
 })
 public class EmoryserverApplication {
 
