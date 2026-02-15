@@ -1,6 +1,7 @@
 package emory.emoryserver.report.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import emory.emoryserver.report.dto.EmotionStatDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -27,11 +28,11 @@ public class OpenAIReportService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * @return 자연어 텍스트 (공감+제안)
+     * @return 자연어 텍스트 (공감 + 제안)
      */
-    public String generateFeedback(String mostFrequentEmotion,
-                                   Map<String, Integer> emotionStatistics,
-                                   List<String> diarySnippets) {
+    public String generateFeedback(String dominantEmotion,
+                                   List<EmotionStatDto> emotionStats,
+                                   List<String> snippets) {
 
         WebClient wc = WebClient.builder()
                 .baseUrl(baseUrl)
@@ -61,9 +62,9 @@ public class OpenAIReportService {
 [일기/대화 요약 스니펫(일부)]
 %s
 """.formatted(
-                safe(mostFrequentEmotion),
-                safeJson(emotionStatistics),
-                String.join("\n---\n", diarySnippets == null ? List.of() : diarySnippets)
+                safe(dominantEmotion),
+                safeJson(emotionStats),
+                String.join("\n---\n", (snippets == null) ? List.of() : snippets)
         );
 
         Map<String, Object> body = Map.of(
@@ -88,13 +89,15 @@ public class OpenAIReportService {
             Object fb = json.get("feedback");
             return fb == null ? "" : String.valueOf(fb);
         } catch (Exception e) {
-            // 파싱 실패 시 그냥 텍스트 반환(그래도 프론트에서 보여줄 수 있게)
+            // 파싱 실패 시 그냥 텍스트 반환(프론트에서라도 표시 가능)
             return outText == null ? "" : outText;
         }
     }
 
     private String extractOutputText(Map resp) {
         if (resp == null) return "";
+
+        // responses API는 output_text를 바로 줄 수도 있음
         Object direct = resp.get("output_text");
         if (direct != null) return String.valueOf(direct);
 
@@ -108,6 +111,7 @@ public class OpenAIReportService {
 
             Object contentObj = m.get("content");
             if (!(contentObj instanceof List<?> parts)) continue;
+
             for (Object p : parts) {
                 if (!(p instanceof Map<?, ?> pm)) continue;
                 if ("output_text".equals(String.valueOf(pm.get("type"))) && pm.get("text") != null) {
