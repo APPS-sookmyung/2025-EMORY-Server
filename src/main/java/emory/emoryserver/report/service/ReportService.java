@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.List;
@@ -23,6 +22,9 @@ public class ReportService {
 
     private final AiDiaryRepository aiDiaryRepository;
 
+    // ✅ 추가: GPT-5로 피드백 생성하는 서비스 (new file로 만들면 됨)
+    private final OpenAIReportService openAIReportService;
+
     /**
      * 주간 리포트 생성 (일요일~토요일)
      */
@@ -33,8 +35,8 @@ public class ReportService {
         LocalDate weekEnd = weekStart.plusDays(6); // 토요일까지
 
         // 해당 주간의 모든 일기 조회 (감정이 있는 것만)
-        List<AiDiary> weekDiaries = aiDiaryRepository.findByUserIdAndDateOfDayBetweenAndMoodIsNotNull(
-                userId, weekStart, weekEnd);
+        List<AiDiary> weekDiaries =
+                aiDiaryRepository.findByUserIdAndDateOfDayBetweenAndMoodIsNotNull(userId, weekStart, weekEnd);
 
         return buildReportResponse(weekDiaries, weekStart, weekEnd, "WEEKLY");
     }
@@ -42,23 +44,27 @@ public class ReportService {
     /**
      * 월간 리포트 생성
      */
-    // 메서드 시그니처 수정 (year, month -> yearMonth)
     public ReportResponseDto getMonthlyReport(String userId, YearMonth yearMonth) {
-        // YearMonth.of(year, month) 코드가 필요 없어짐
+
         LocalDate monthStart = yearMonth.atDay(1);
         LocalDate monthEnd = yearMonth.atEndOfMonth();
 
         // 해당 월의 모든 일기 조회 (감정이 있는 것만)
-        List<AiDiary> monthDiaries = aiDiaryRepository.findByUserIdAndDateOfDayBetweenAndMoodIsNotNull(
-                userId, monthStart, monthEnd);
+        List<AiDiary> monthDiaries =
+                aiDiaryRepository.findByUserIdAndDateOfDayBetweenAndMoodIsNotNull(userId, monthStart, monthEnd);
 
         return buildReportResponse(monthDiaries, monthStart, monthEnd, "MONTHLY");
     }
 
     /**
-     * 리포트 응답 객체 생성
+     * 리포트 응답 객체 생성 (+ aiFeedback 포함)
      */
-    private ReportResponseDto buildReportResponse(List<AiDiary> diaries, LocalDate startDate, LocalDate endDate, String reportType) {
+    private ReportResponseDto buildReportResponse(
+            List<AiDiary> diaries,
+            LocalDate startDate,
+            LocalDate endDate,
+            String reportType
+    ) {
         if (diaries.isEmpty()) {
             return ReportResponseDto.builder()
                     .periodStart(startDate)
@@ -67,17 +73,18 @@ public class ReportService {
                     .emotionStats(List.of())
                     .totalDiaryCount(0)
                     .dominantEmotion(null)
+                    .aiFeedback(null) // ✅ 추가
                     .build();
         }
 
-        // 감정별 통계 계산
+        // 1) 감정별 통계 계산
         Map<String, Long> emotionCounts = diaries.stream()
                 .filter(diary -> diary.getMood() != null && !diary.getMood().isEmpty())
                 .collect(Collectors.groupingBy(AiDiary::getMood, Collectors.counting()));
 
         int totalCount = emotionCounts.values().stream().mapToInt(Long::intValue).sum();
 
-        // 감정별 통계 DTO 생성
+        // 2) 감정별 통계 DTO 생성
         List<EmotionStatDto> emotionStats = emotionCounts.entrySet().stream()
                 .map(entry -> {
                     String emotion = entry.getKey();
@@ -93,8 +100,33 @@ public class ReportService {
                 .sorted((a, b) -> b.getCount().compareTo(a.getCount())) // 개수 내림차순 정렬
                 .collect(Collectors.toList());
 
-        // 가장 많은 감정 찾기
+        // 3) 가장 많은 감정 찾기
         String dominantEmotion = emotionStats.isEmpty() ? null : emotionStats.get(0).getEmotion();
+
+        // 4) ✅ AI 피드백 생성 (대화/일기 내용 + 주요 감정 기반)
+        // - 여기서는 "일기 content"를 대화요약으로 활용 (난이도 낮고 즉시 적용 가능)
+        // - 너무 길면 비용/시간 늘어서 길이 제한 + 최대 3개만
+        List<String> snippets = diaries.stream()
+                .map(d -> {
+                    String c = d.getContent() == null ? "" : d.getContent().trim();
+                    if (c.length() > 300) c = c.substring(0, 300) + "…";
+                    return c;
+                })
+                .filter(s -> !s.isBlank())
+                .limit(3)
+                .toList();
+
+        String aiFeedback = null;
+        try {
+            aiFeedback = openAIReportService.generateFeedback(
+                    dominantEmotion,
+                    emotionStats,
+                    snippets
+            );
+        } catch (Exception e) {
+            // 피드백 생성 실패해도 리포트는 내려가게 (운영 안정성)
+            aiFeedback = null;
+        }
 
         return ReportResponseDto.builder()
                 .periodStart(startDate)
@@ -103,6 +135,7 @@ public class ReportService {
                 .emotionStats(emotionStats)
                 .totalDiaryCount(diaries.size())
                 .dominantEmotion(dominantEmotion)
+                .aiFeedback(aiFeedback) // ✅ 추가
                 .build();
     }
 
@@ -111,8 +144,6 @@ public class ReportService {
      */
     public int getCurrentWeekOfYear() {
         LocalDate today = LocalDate.now();
-
-        // 일요일을 주의 시작으로 하는 WeekFields 설정
         WeekFields weekFields = WeekFields.of(DayOfWeek.SUNDAY, 1);
         return today.get(weekFields.weekOfYear());
     }
