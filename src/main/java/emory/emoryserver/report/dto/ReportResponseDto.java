@@ -29,4 +29,6 @@ public class ReportResponseDto {
 
     @Schema(description = "가장 많은 감정")
     private String dominantEmotion;
+
+    private String aiFeedback;
 }
