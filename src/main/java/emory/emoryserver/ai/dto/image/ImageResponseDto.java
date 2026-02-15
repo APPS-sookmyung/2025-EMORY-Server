@@ -1,13 +1,18 @@
 package emory.emoryserver.ai.dto.image;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ImageResponseDto {
-    @Schema(description = "생성된 이미지 URL")
     private String imageUrl;
-
-    @Schema(description = "대표 색상", example = "#FFDDC1")
     private String dominantColor;
+
+    // 추가: 저장된 이미지 id
+    private String imageId;
 }

@@ -1,6 +1,5 @@
 package emory.emoryserver.ai.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -21,13 +20,14 @@ public class OpenAIImageService {
     @Value("${openai.image.base-url:https://api.openai.com}")
     private String baseUrl;
 
-    @Value("${openai.image.model:gpt-4.1-mini}")
+    @Value("${openai.image.model:gpt-image-1}")
     private String imageModel;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Value("${openai.image.size:1024x1024}")
+    private String imageSize;
 
     /**
-     * @return base64 (png bytes) - prefix 없는 순수 base64 문자열
+     * @return base64 png 문자열 (raw b64, "data:image/png;base64," prefix 없음)
      */
     public String generateBase64Png(String prompt) {
         WebClient wc = WebClient.builder()
@@ -38,44 +38,28 @@ public class OpenAIImageService {
 
         Map<String, Object> body = Map.of(
                 "model", imageModel,
-                "input", prompt,
-                "tools", List.of(Map.of("type", "image_generation")),
-                "truncation", "auto"
+                "prompt", prompt,
+                "size", imageSize,
+                "n", 1,
+                "response_format", "b64_json"
         );
 
         Map resp = wc.post()
-                .uri("/v1/responses")
+                .uri("/v1/images/generations")
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
 
-        return extractImageBase64(resp);
-    }
+        // resp.data[0].b64_json
+        Object dataObj = (resp == null) ? null : resp.get("data");
+        if (!(dataObj instanceof List<?> data) || data.isEmpty()) return "";
 
-    private String extractImageBase64(Map resp) {
-        if (resp == null) return "";
+        Object first = data.get(0);
+        if (!(first instanceof Map<?, ?> m)) return "";
 
-        Object outputObj = resp.get("output");
-        if (!(outputObj instanceof List<?> output)) return "";
-
-        for (Object item : output) {
-            if (!(item instanceof Map<?, ?> m)) continue;
-            String type = String.valueOf(m.get("type"));
-            if (!"image_generation_call".equals(type)) continue;
-
-            Object result = m.get("result");
-            // 공식 가이드 예시처럼 result가 base64 문자열로 오는 케이스
-            if (result instanceof String s) return s;
-
-            // 혹시 result가 map 구조로 오는 케이스도 방어
-            if (result instanceof Map<?, ?> rm) {
-                Object b64 = rm.get("b64_json");
-                if (b64 != null) return String.valueOf(b64);
-                Object image = rm.get("image_base64");
-                if (image != null) return String.valueOf(image);
-            }
-        }
-        return "";
+        Object b64 = m.get("b64_json");
+        return b64 == null ? "" : String.valueOf(b64);
     }
 }
+
