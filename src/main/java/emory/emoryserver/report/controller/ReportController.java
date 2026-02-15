@@ -1,6 +1,7 @@
 package emory.emoryserver.report.controller;
 
 import emory.emoryserver.report.dto.ReportResponseDto;
+import emory.emoryserver.report.service.DailyReportService;
 import emory.emoryserver.report.service.ReportService;
 import emory.emoryserver.global.util.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +23,18 @@ public class ReportController {
 
     private final ReportService reportService;
     private final UserIdExtractor userIdExtractor;
+    private final DailyReportService dailyReportService;
+
+    @Operation(summary = "하루 감정 리포트", description = "대화 transcript 기반 감정 분포 + AI 피드백")
+    @GetMapping("/daily/{date}")
+    public ReportResponseDto getDailyReport(
+            @Parameter(description = "기준 날짜 (YYYY-MM-DD)")
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal String email
+    ) {
+        String userId = userIdExtractor.getUserIdFromEmail(email);
+        return dailyReportService.getDailyReport(userId, date);
+    }
 
     @Operation(summary = "주간 감정 리포트", description = "일요일부터 토요일 기준, 감정별 통계")
     @GetMapping("/weekly/{date}")

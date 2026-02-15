@@ -6,11 +6,13 @@ import emory.emoryserver.ai.model.ChatLog;
 import emory.emoryserver.ai.model.ChatSession;
 import emory.emoryserver.ai.repository.ChatLogRepository;
 import emory.emoryserver.ai.repository.ChatSessionRepository;
+import emory.emoryserver.report.service.DailyReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ public class ChatSessionService {
 
     private final ChatSessionRepository chatSessionRepository;
     private final ChatLogRepository chatLogRepository;
+    private final DailyReportService dailyReportService;
 
     public String startSession(String selectedEmotion, String calendarSummary) {
         String userId = currentUserId();
@@ -79,6 +82,17 @@ public class ChatSessionService {
 
         // TODO: 여기서 후처리 트리거 (감정분석/일기생성) 붙이면 됨
         // ex) aidiary generate 호출용 이벤트 발행/큐 enqueue 등
+        try {
+            LocalDate date = session.getEndedAt().toLocalDate();
+            List<ChatLog> fullLogs = chatLogRepository.findBySessionIdAndUserIdOrderByCreatedAtAsc(
+                    session.getId(),
+                    session.getUserId()
+            );
+
+            dailyReportService.createOrUpdateDailyReportFromSession(session.getUserId(), date, fullLogs);
+        } catch (Exception e) {
+            // 리포트 생성 실패해도 대화 저장은 성공해야 함
+        }
     }
 
     public ChatSession getOwnedSessionOrThrow(String sessionId) {
