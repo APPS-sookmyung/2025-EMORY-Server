@@ -18,5 +18,10 @@ public class UserIdExtractor {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + email));
         return user.getId();
+
+    }
+    // ✅ 스샷 코드 호환용 alias
+    public String extractUserId(String email) {
+        return getUserIdFromEmail(email);
     }
 }

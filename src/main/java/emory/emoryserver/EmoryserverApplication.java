@@ -2,8 +2,10 @@ package emory.emoryserver;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
+@ConfigurationPropertiesScan
 @SpringBootApplication
 @EnableMongoRepositories(basePackages = {
 		"emory.emoryserver.aidiary.repository",
