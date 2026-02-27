@@ -1,12 +1,17 @@
 package emory.emoryserver.ai.controller;
 
 import emory.emoryserver.ai.dto.ImageGenerateRequest;
+import emory.emoryserver.ai.dto.image.ImageGenerateResultResponse;
+import emory.emoryserver.ai.model.AiGeneratedImage;
 import emory.emoryserver.ai.service.AiImageService;
 import emory.emoryserver.common.dto.ApiResponse;
 import emory.emoryserver.global.util.UserIdExtractor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/ai/image")
@@ -17,16 +22,29 @@ public class ImageController {
     private final UserIdExtractor userIdExtractor;
 
     /**
-     * 클라이언트는 sessionId만 전달합니다.
-     * 서버가 해당 세션의 대화 로그를 바탕으로 이미지 프롬프트를 생성한 뒤, OpenAI Images API로 이미지를 생성합니다.
+     * (인증 필요) sessionId 기반으로 이미지 생성 → DB 저장 → imageId + imageUrl 반환
      */
     @PostMapping("/generate")
-    public ApiResponse<String> generate(
+    public ApiResponse<ImageGenerateResultResponse> generate(
             @AuthenticationPrincipal String email,
             @RequestBody ImageGenerateRequest request
     ) {
         String userId = userIdExtractor.extractUserId(email);
-        String dataUri = aiImageService.generateImageFromSession(userId, request.sessionId());
-        return ApiResponse.success(dataUri);
+
+        AiImageService.ImageResult result =
+                aiImageService.generateImageFromSession(userId, request.sessionId());
+
+        String imageUrl = "/ai/image/" + result.imageId();
+        return ApiResponse.success(new ImageGenerateResultResponse(result.imageId(), imageUrl));
+    }
+
+    /**
+     * (데모용: 인증 없이 공개) imageUrl로 접근하면 실제 이미지 바이너리를 내려준다.
+     * <img src="/ai/image/{imageId}" /> 가능
+     */
+    @GetMapping(value = "/{imageId}", produces = MediaType.IMAGE_PNG_VALUE)
+    public @ResponseBody byte[] getImage(@PathVariable String imageId) {
+        AiGeneratedImage img = aiImageService.getImagePublicOrThrow(imageId);
+        return Base64.getDecoder().decode(img.getB64());
     }
 }

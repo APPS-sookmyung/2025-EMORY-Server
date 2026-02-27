@@ -41,9 +41,6 @@ public class OpenAIImageService {
     @Value("${openai.image.background:transparent}")
     private String background;
 
-    @Value("${openai.image.return-mode:data_uri}")
-    private String returnMode;
-
     public OpenAIImageService(
             @Value("${openai.image.base-url:${openai.base-url:https://api.openai.com}}") String baseUrl,
             @Value("${openai.webclient.max-in-memory-size:10485760}") int maxInMemorySize
@@ -59,20 +56,26 @@ public class OpenAIImageService {
                 .build();
     }
 
+    /** 이미지 생성 결과(저장용) */
+    public record GeneratedImage(String format, String b64) {}
+
     /**
      * OpenAI Images API (/v1/images/generations)
+     * - DB 저장을 위해 "순수 base64"로 돌려준다.
      */
-    public String generateImage(String prompt) {
+    public GeneratedImage generateImage(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             throw new IllegalArgumentException("prompt is blank");
         }
+
+        String fmt = (outputFormat == null || outputFormat.isBlank()) ? "png" : outputFormat;
 
         Map<String, Object> body = new HashMap<>();
         body.put("model", (model == null || model.isBlank()) ? "gpt-image-1" : model);
         body.put("prompt", prompt);
         body.put("n", Math.max(n, 1));
         body.put("size", (size == null || size.isBlank()) ? "1024x1024" : size);
-        body.put("output_format", (outputFormat == null || outputFormat.isBlank()) ? "png" : outputFormat);
+        body.put("output_format", fmt);
         body.put("quality", (quality == null || quality.isBlank()) ? "auto" : quality);
         body.put("background", (background == null || background.isBlank()) ? "transparent" : background);
 
@@ -101,11 +104,7 @@ public class OpenAIImageService {
             throw new RuntimeException("OpenAI image b64_json is empty");
         }
 
-        String fmt = (outputFormat == null || outputFormat.isBlank()) ? "png" : outputFormat;
-        if ("base64".equalsIgnoreCase(returnMode)) {
-            return b64;
-        }
-        return "data:image/" + fmt + ";base64," + b64;
+        return new GeneratedImage(fmt, b64);
     }
 
     static class OpenAIImagesResponse {
