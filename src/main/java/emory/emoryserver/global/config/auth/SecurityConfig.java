@@ -89,6 +89,9 @@ public class SecurityConfig {
                         // 프리플라이트는 최우선 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // ✅ 이미지 조회는 공개(데모용) - /ai/** 보다 위에 있어야 함
+                        .requestMatchers(HttpMethod.GET, "/ai/image/**").permitAll()
+
                         // 공개 경로
                         .requestMatchers(PUBLIC).permitAll()
 
@@ -98,8 +101,8 @@ public class SecurityConfig {
                         .requestMatchers("/diary/**").authenticated()
                         .requestMatchers("/calendar/**").authenticated()
                         .requestMatchers("/timecapsule/**").authenticated()
-                        .requestMatchers("/report/**").permitAll()
-                        .requestMatchers("/ai/**").permitAll()
+                        .requestMatchers("/report/**").authenticated()
+                        .requestMatchers("/ai/**").authenticated()
                         .requestMatchers("/api/user/**", "/api/admin/**").authenticated()
 
                         // 나머지 전부 보호
